@@ -556,16 +556,17 @@ public class DummyPlayer {
         listener.start();
     }
 
-    // single request/response to Master
+    // single request/response to Master — traffic is AES-encrypted after DH handshake
     private String sendToMaster(String message) throws IOException {
-        Socket             server = new Socket(masterHost, masterPort);
-        ObjectOutputStream out    = new ObjectOutputStream(server.getOutputStream());
-        out.flush();
-        ObjectInputStream  in     = new ObjectInputStream(server.getInputStream());
-        out.writeUTF(message);
-        out.flush();
-        String result = in.readUTF();
-        server.close();
-        return result;
+        Socket socket = new Socket(masterHost, masterPort);
+        try {
+            SecureChannel ch = SecureChannel.clientSide(socket);
+            ch.writeUTF(message);
+            return ch.readUTF();
+        } catch (Exception e) {
+            throw new IOException("Secure connection failed: " + e.getMessage(), e);
+        } finally {
+            socket.close();
+        }
     }
 }

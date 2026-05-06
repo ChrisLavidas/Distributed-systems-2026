@@ -80,21 +80,16 @@ public class MasterClient {
                 Socket s = null;
                 try {
                     s = openSocket();
-                    ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                    out.flush();
-                    ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
+                    SecureChannel ch = SecureChannel.clientSide(s);
 
                     String request = Protocol.build(Protocol.SEARCH, minStars, betCat, risk);
-                    out.writeUTF(request);
-                    out.flush();
+                    ch.writeUTF(request);
 
                     final List<Game> results = new ArrayList<>();
                     String line;
-                    while (!(line = in.readUTF()).equals(Protocol.END)) {
+                    while (!(line = ch.readUTF()).equals(Protocol.END)) {
                         String[] p = Protocol.parse(line);
                         if (Protocol.MAP_RESULT.equals(p[0])) {
-                            // Re-glue payload parts back with SEP — Game's transport
-                            // string itself contains SEP, so we must preserve it.
                             StringBuilder tsb = new StringBuilder();
                             for (int i = 1; i < p.length; i++) {
                                 if (i > 1) tsb.append(Protocol.SEP);
@@ -110,7 +105,7 @@ public class MasterClient {
                     post(new Runnable() {
                         @Override public void run() { cb.onSearchResult(results); }
                     });
-                } catch (final IOException ioe) {
+                } catch (final Exception ioe) {
                     post(new Runnable() {
                         @Override public void run() {
                             cb.onSearchError("Network error: " + ioe.getMessage());
@@ -264,21 +259,18 @@ public class MasterClient {
                 Socket s = null;
                 try {
                     s = openSocket();
-                    ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-                    out.flush();
-                    ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
+                    SecureChannel ch = SecureChannel.clientSide(s);
 
-                    out.writeUTF(message);
-                    out.flush();
+                    ch.writeUTF(message);
 
-                    final String raw = in.readUTF();
+                    final String raw = ch.readUTF();
                     String[] p = Protocol.parse(raw);
                     final boolean ok = Protocol.OK.equals(p[0]);
                     final String payload = (p.length > 1) ? p[1] : "";
                     post(new Runnable() {
                         @Override public void run() { cb.onResult(ok, payload); }
                     });
-                } catch (final IOException ioe) {
+                } catch (final Exception ioe) {
                     post(new Runnable() {
                         @Override public void run() {
                             cb.onResult(false, "Network error: " + ioe.getMessage());

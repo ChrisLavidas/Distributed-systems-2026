@@ -1,185 +1,137 @@
-# Κατανεμημένα Συστήματα — Παραδοτέο Β
-### Ομάδα: 3230096 / 3230188 / 3230064
-### Εαρινό Εξάμηνο 2025–2026
+# Online Casino  Distributed Systems
 
-Πλατφόρμα online παιχνιδιών με κατανεμημένο backend (Master / Workers /
-Reducer / SRG) και Android frontend για τους παίκτες.
+<p align="center">
+  <img src="screenshots/login.png" width="250"/>
+  &nbsp;
+</p>
 
----
+A fully distributed online casino platform built in Java, with a real Android mobile frontend. Players search for games, place bets, and receive live jackpot notifications  all over raw TCP sockets, no frameworks, no database.
 
-## Δομή του project
 
-```
-3230096_3230188_3230064/
-├── src/                         # Backend κώδικας (Java)
-│   ├── master/                    Master node (TCP server, δρομολόγηση H(gameName))
-│   ├── worker/                    Worker nodes (in-memory games, bet processing)
-│   ├── reducer/                   MapReduce reducer για provider/player stats
-│   ├── srg/                       Secure Random Generator (TCP, sha256 integrity)
-│   ├── manager/                   Console app για τον manager
-│   ├── player/                    DummyPlayer (για testing — έχει αντικατασταθεί
-│   │                              από το Android app)
-│   └── shared/                    Game, Protocol, BetRecord, JsonGameParser
-│
-├── android/                     # Android app (Παραδοτέο Β)
-│   ├── app/src/main/java/...      LoginActivity, MainActivity, MasterClient,
-│   │                              GamesAdapter, Session, Validators
-│   ├── app/src/main/res/...       Layouts, drawables, theme (dark/gold)
-│   ├── build.gradle, settings.gradle, gradle.properties
-│   └── README.md                  Οδηγίες Android
-│
-├── sample_data/                 # Παραδείγματα JSON για προσθήκη παιχνιδιών
-│   ├── lucky_slots.json
-│   ├── lucky_wheel.json
-│   ├── mega_poker.json
-│   └── roulette_x.json
-│
-├── build_and_run.sh             # Compile helper για τον backend
-└── README.md                    # Αυτό το αρχείο
-```
+## What is it?
+
+Picture a casino where the "house" runs across multiple servers at the same time. A player opens the Android app, picks a game  slot machine, roulette, lucky wheel  bets some FUN currency, and within milliseconds a result comes back. Behind the scenes, a chain of distributed components handles the request: a Master server routes it to the right Worker, the Worker asks a dedicated Random Number Generator for a cryptographically secure random number, computes the payout, and sends it back. If a jackpot hits, every connected player receives a live push notification instantly.
+
+There is no database. No external frameworks. No third-party libraries. Everything — storage, concurrency, communication, fault tolerance — is built entirely on raw Java sockets and the standard JDK.
+
+
+
+## Playing the game
+
+When you open the app you land on the login screen. You type a player ID, an initial balance in FUN currency, and the IP address and port of the backend server. For the Android emulator the server is always reachable at `10.0.2.2:5000`; on a real device you use the local network IP of the machine running the backend.
+
+<p align="center">
+  <img src="screenshots/lobby.png" width="230"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/games.png" width="230"/>
+</p>
+
+Once inside the lobby you see your wallet and a set of search filters: minimum star rating, bet category ($, $$, $$$), and risk level (Low, Medium, High). You hit **Search Games** and the backend responds in real time with a list of matching games, each showing its provider, rating, bet range, jackpot multiplier, and risk tag.
+
+<p align="center">
+  <img src="screenshots/slots.png" width="230"/>
+  &nbsp;&nbsp;
+  <img src="screenshots/wheel.png" width="230"/>
+</p>
+
+Tapping a game takes you to its dedicated screen. LuckySlots shows spinning reels and a full paytable — Diamond 10x, Seven 5x, Bell 3x, Star 2x, Grapes 1.5x — so you know exactly what each outcome is worth before you pull. luckywheel renders a coloured spinning wheel, with each segment mapped to a multiplier or LOSE. Both games show a live millisecond latency indicator and a scrolling ticker at the bottom that streams bets from every active player.
 
 ---
 
-## Τι καλύπτει το Παραδοτέο Β
+## Running the backend
 
-Όλες οι απαιτήσεις του Α' μέρους, συν:
-
-- **Android application** (αντικαθιστά τον DummyPlayer): Login, Search με
-  φίλτρα (min stars, bet category, risk level), Play, Rate, Add Balance.
-  Επικοινωνία αποκλειστικά μέσω TCP Sockets, ασύγχρονα (Threads + Handler)
-  ώστε η εφαρμογή να παραμένει διαδραστική.
-- **Aggregation queries** στον manager: συνολικά κέρδη/ζημιές ανά
-  Provider και ανά Player, υπολογισμένα με MapReduce (Workers →
-  Reducer → Master).
-
----
-
-## Εκκίνηση — Backend
-
-### Compile
-```bash
-./build_and_run.sh        # Κάνει compile και τυπώνει τα commands
-```
-ή χειροκίνητα:
-```bash
-find src -name "*.java" > sources.txt
-javac -d bin @sources.txt
-```
-
-### Run (σε διαφορετικά terminals, με αυτή τη σειρά):
+All components compile with a single command and start in separate terminal windows. On Windows, just double-click `start_all.bat`. On Linux/Mac:
 
 ```bash
-# 1. Secure Random Generator
-java -cp bin srg.SecureRandomGenerator 6000
+find src -name "*.java" > sources.txt && javac -d bin @sources.txt
 
-# 2. Reducer
+java -cp bin srg.SecureRandomGenerator 6000   # start first
 java -cp bin reducer.Reducer 7000
-
-# 3. Workers (δυναμικός αριθμός — προσθέστε όσους θέλετε)
 java -cp bin worker.WorkerNode 0 5001 localhost 6000 localhost 7000
 java -cp bin worker.WorkerNode 1 5002 localhost 6000 localhost 7000
-
-# 4. Master
 java -cp bin master.Master 5000 localhost 7000 localhost:5001 localhost:5002
-
-# 5. Manager console (προσθέστε παιχνίδια + δείτε stats)
-java -cp bin manager.ManagerApp localhost 5000
 ```
 
-### Προσθήκη παιχνιδιών
-Από τον Manager console, επιλέξτε `1. Add game` και δώστε path σε ένα από
-τα JSON αρχεία στο `sample_data/`.
+Once the backend is running, open the Manager console to load games from the `sample_data/` folder, then connect with the Android app or the DummyPlayer.
 
 ---
 
-## Εκκίνηση — Android App
+## Assignment requirements  and how we met them
 
-### 1. Άνοιγμα στο Android Studio
-- Open an Existing Project → επιλέξτε τον φάκελο `android/`
-- Περιμένετε Gradle sync
-- Build → Make Project
+### TCP sockets for all communication
 
-### 2. Run σε emulator ή πραγματική συσκευή
+Every single connection in the system is a raw TCP socket. The Master listens on port 5000 for players and managers, Workers listen on their own ports, the SRG on 6000, and the Reducer on 7000. There is no HTTP, no REST, no message queue. Each request opens a connection, sends a command in our custom `~~`-delimited protocol, reads the response, and closes. The only exception is the broadcast channel on port 5001, which stays open permanently so the Master can push jackpot notifications to connected players without polling.
 
-Στην οθόνη login:
+### Multithreading with `synchronized` and `wait/notify`
 
-| Πεδίο            | Τιμή (emulator) | Τιμή (πραγματική συσκευή) |
-| ---------------- | --------------- | -------------------------- |
-| Player ID        | `AN1234`        | `AN1234`                   |
-| Starting balance | `100`           | `100`                      |
-| Master host      | `10.0.2.2`      | IP του PC στο LAN (π.χ. `192.168.1.10`) |
-| Master port      | `5000`          | `5000`                     |
+No `java.util.concurrent` was used anywhere. Every shared data structure — the game registry, the bet history, the subscriber list — is protected with plain `synchronized` blocks. Threads coordinate through `wait()` and `notifyAll()`. This is most visible in the SRG, where a producer thread and a consumer thread share a buffer per game and block each other correctly without any locks or semaphores from the concurrency library.
 
-> Ο emulator βλέπει το host machine ως `10.0.2.2` (όχι `localhost`).
-> Για πραγματική συσκευή, βεβαιωθείτε ότι το firewall επιτρέπει
-> εισερχόμενες συνδέσεις στο 5000.
+### Producer-Consumer the Secure Random Generator
 
----
+The SRG is a standalone server process that maintains one queue per active game. A background producer thread runs continuously for each game, filling its buffer with cryptographically secure random integers (`java.security.SecureRandom`) up to a capacity of 50 numbers. When a Worker needs a random number to resolve a bet, it connects to the SRG and consumes one — blocking if the buffer is empty. This decouples slow entropy generation from the fast request path.
 
-## Αρχιτεκτονική επικοινωνίας
+Each number comes bundled with a SHA-256 HMAC computed as `SHA-256(number + gameSecret)`. The Worker verifies this hash before using the number, so the SRG cannot be spoofed by anyone intercepting the internal channel.
+
+### MapReduce for statistics
+
+When a Manager requests statistics — total earnings by game provider, or total profit/loss by player — the Master sends a Map task to every Worker in parallel. Each Worker scans its in-memory bet history and emits partial results over TCP to the Reducer. The Reducer merges them into a final aggregated answer, which the Master then returns to the Manager. The entire pipeline is hand-built: no Hadoop, no Spark, no shared memory between nodes.
+
+### Active Replication and fault tolerance
+
+Every game stored on Worker 1 is simultaneously replicated to Worker 2, and vice versa. When a bet is resolved on the primary Worker, it immediately sends a sync message to the replica so both stay consistent. The Master pings Workers periodically; if one goes silent, all traffic is transparently redirected to the surviving replica and players experience no downtime. Games are distributed across Workers using `hash(gameName) mod N`, so adding more Workers automatically rebalances the load.
+
+### In-memory storage  no database, no external libraries
+
+All game data, bet history, player ratings, and running stats live in standard Java collections inside the Worker and Reducer JVMs. Nothing is persisted to disk during normal operation. The only dependency is the standard JDK — no external library was used anywhere in the project.
+
+
+
+## Security  Encrypted TCP with Diffie-Hellman + AES
+
+### The problem
+
+In the original architecture every message traveled as readable plain text. Anyone on the same network running Wireshark could see everything in real time:
 
 ```
-        ┌──────────────┐
-        │  Android App │  (Παραδοτέο Β)
-        └──────┬───────┘
-               │ TCP (φίλτρα, play, rate, addBalance)
-               ▼
-        ┌──────────────┐        TCP         ┌──────────┐
-        │    Master    │ ─────────────────► │ Reducer  │
-        └──────┬───────┘                    └──────────┘
-        TCP ┌──┼──┐ TCP                           ▲
-            ▼  ▼  ▼                               │
-         ┌──┐┌──┐┌──┐                     map results (TCP)
-         │W1││W2││Wn│  ─────────────────────────┘
-         └┬─┘└──┘└──┘
-          │ TCP (random numbers + sha256 integrity check)
-          ▼
-        ┌──────────────┐
-        │     SRG      │
-        └──────────────┘
+PLAY~~player1~~LuckySlots~~10.0
+OK~~25.0
+ADD_BALANCE~~player1~~500.0
+OK~~added
 ```
 
-Όλες οι επικοινωνίες γίνονται με raw TCP sockets (`ServerSocket` +
-`Socket` + `ObjectOutputStream`/`ObjectInputStream.writeUTF/readUTF`).
-Καμία έτοιμη βιβλιοθήκη HTTP/REST, καμία DB — όλα in-memory.
+With 50–100 observations per game an attacker could reconstruct the full multiplier table of every game — effectively learning the casino's business model without being a Manager. They could replay a winning packet to collect the same prize multiple times, or impersonate a Manager to add and remove games at will.
 
----
+<p align="center">
+  <img src="screenshots/wireshark_before.png" width="850"/>
+  <br/><em>Before encryption: protocol strings are fully readable in Wireshark</em>
+</p>
 
-## Έλεγχοι που μπορείτε να κάνετε
+### The solution
 
-1. **Concurrent bets**: τρέξτε δύο instances του DummyPlayer (ή ένα
-   DummyPlayer + Android app) και πονταρίστε ταυτόχρονα στο ίδιο
-   παιχνίδι. Ο Worker χρησιμοποιεί `synchronized` για το shared state.
+We implemented a `SecureChannel` class that wraps every **external** TCP connection (Player → Master and Manager → Master) with end-to-end encryption, using only `javax.crypto`, `java.security`, and `java.math.BigInteger` — all part of the standard JDK, within the assignment constraints. Internal channels (Master ↔ Worker, Master ↔ Reducer, Master ↔ SRG) were intentionally left as plain `ObjectOutputStream` TCP since they run on a trusted local network.
 
-2. **Dynamic workers**: τρέξτε τον Master με 1, 2, 3, ή περισσότερους
-   Workers — απλά αλλάξτε τα arguments. Τα παιχνίδια κατανέμονται με
-   `H(GameName) mod N`.
+The handshake works like this. When a connection opens, both sides independently generate a random ephemeral key pair using Diffie-Hellman over RFC 2409 Group 2 (1024-bit MODP). They exchange only their **public** keys over the wire. Each side then computes the shared secret independently — mathematically, `(g^a)^b = (g^b)^a = g^(ab)` — so the secret itself is never transmitted. A 128-bit AES key is derived by taking the first 16 bytes of `SHA-256(shared_secret)`.
 
-3. **Provider stats (MapReduce)**: από τον Manager, option 4 →
-   εμφανίζει ανά provider τα κέρδη/ζημιές ανά game και το total, αφού
-   πρώτα τρέξει map phase (όλοι οι Workers στέλνουν δεδομένα στον
-   Reducer) και έπειτα reduce phase (Master διαβάζει από Reducer).
+```
+Player                           Master
+  │                                │
+  │── DH public key (g^a) ────────►│   safe to intercept
+  │◄─ DH public key (g^b) ─────────│   safe to intercept
+  │                                │
+  │  Both compute g^(ab)           │
+  │  without ever sending it       │
+  │                                │
+  │═══ AES-128-CBC from here ══════│
+  │── "PLAY~~p1~~LuckySlots~~10" ─►│   unreadable ciphertext
+  │◄─ "OK~~25.0" ──────────────────│   unreadable ciphertext
+```
 
-4. **Player stats**: option 5 → ανά player το συνολικό P/L.
+Every message is encrypted with AES-128-CBC and a freshly generated random IV. Even if the exact same command is sent twice, the ciphertext looks completely different — which also makes replay attacks impossible, because replaying the ciphertext produces garbage after decryption on the other side.
 
----
+<p align="center">
+  <img src="screenshots/wireshark.png" width="950""/>
+  <br/><em>After encryption: Wireshark cannot parse the data — it shows "Malformed Packet: RSL"</em>
+</p>
 
-## Παρατηρήσεις υλοποίησης
+The `SecureChannel` class exposes the same `writeUTF` / `readUTF` API as the original `ObjectOutputStream`, so the rest of the codebase required zero protocol changes. It is a transparent encryption layer sitting between the TCP socket and the application logic.
 
-- **Συγχρονισμός**: αποκλειστικά με `synchronized` / `wait` / `notify`.
-  Καμία χρήση `java.util.concurrent` utilities (ακολουθεί τον περιορισμό
-  της εκφώνησης).
-- **Memory-only storage**: τα παιχνίδια αποθηκεύονται μόνο στη μνήμη των
-  Workers. Αν πέσει ένας Worker, τα δεδομένα του χάνονται (το bonus
-  active replication δεν έχει υλοποιηθεί σε αυτό το παραδοτέο — ομάδα 3
-  ατόμων).
-- **SRG integrity**: ο Worker και ο SRG μοιράζονται ένα κοινό secret
-  `HashKey` ανά παιχνίδι. Ο SRG στέλνει `(number, sha256(number+secret))`
-  και ο Worker επαληθεύει.
-
----
-
-## Για λεπτομέρειες του Android app
-
-Δείτε το `android/README.md` — έχει screenshots, troubleshooting,
-compatibility notes, και πλήρη περιγραφή του UI flow.
