@@ -60,15 +60,15 @@ public class Game implements Serializable {
     /** Serialises this game into the transport format used by the backend. */
     public String toTransportString() {
         return gameName     + "~~" +
-               providerName + "~~" +
-               stars        + "~~" +
-               noOfVotes    + "~~" +
-               (gameLogo == null ? "" : gameLogo) + "~~" +
-               minBet       + "~~" +
-               maxBet       + "~~" +
-               (riskLevel == null ? "low" : riskLevel) + "~~" +
-               (hashKey == null ? "" : hashKey) + "~~" +
-               active;
+                providerName + "~~" +
+                stars        + "~~" +
+                noOfVotes    + "~~" +
+                (gameLogo == null ? "" : gameLogo) + "~~" +
+                minBet       + "~~" +
+                maxBet       + "~~" +
+                (riskLevel == null ? "low" : riskLevel) + "~~" +
+                (hashKey == null ? "" : hashKey) + "~~" +
+                active;
     }
 
     /** Parses a transport string of the form produced by backend Game#toTransportString. */
@@ -100,4 +100,13 @@ public class Game implements Serializable {
     public String  getBetCategory()  { return betCategory; }
     public double  getJackpot()      { return jackpot; }
     public boolean isActive()        { return active; }
+
+    public double[] getMultiplierTable() {
+        if (riskLevel == null) return new double[]{0.0,0.0,0.0,0.1,0.5,1.0,1.1,1.3,2.0,2.5};
+        switch (riskLevel.toLowerCase()) {
+            case "medium": return new double[]{0.0,0.0,0.0,0.0,0.0,0.5,1.0,1.5,2.5,3.5};
+            case "high":   return new double[]{0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.0,6.5};
+            default:       return new double[]{0.0,0.0,0.0,0.1,0.5,1.0,1.1,1.3,2.0,2.5};
+        }
+    }
 }

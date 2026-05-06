@@ -55,6 +55,7 @@ public class GamePlayActivity extends AppCompatActivity {
 
     // Quick-bet buttons
     private Button btnBetMin, btnBetHalf, btnBetDouble, btnBetMax;
+    private Button btnSoundToggle, btnBetCalc;
 
     // Extra overlay views
     private WinStreakBannerView   streakBanner;
@@ -202,6 +203,8 @@ public class GamePlayActivity extends AppCompatActivity {
         btnBetHalf     = findViewById(R.id.btnBetHalf);
         btnBetDouble   = findViewById(R.id.btnBetDouble);
         btnBetMax      = findViewById(R.id.btnBetMax);
+        btnSoundToggle = findViewById(R.id.btnSoundToggle);
+        btnBetCalc     = findViewById(R.id.btnBetCalc);
         streakBanner   = findViewById(R.id.streakBanner);
         connStatus     = findViewById(R.id.connStatus);
         historyPanel   = findViewById(R.id.historyPanel);
@@ -278,7 +281,7 @@ public class GamePlayActivity extends AppCompatActivity {
 
         // Quick-bet buttons
         btnBetMin.setOnClickListener(v -> { SoundManager.get().playClick();
-                etBet.setText(String.format(Locale.US, "%.2f", game.getMinBet())); });
+            etBet.setText(String.format(Locale.US, "%.2f", game.getMinBet())); });
         btnBetHalf.setOnClickListener(v -> { SoundManager.get().playClick();
             double cur = parseBetField();
             if (cur > 0) etBet.setText(String.format(Locale.US, "%.2f", Math.max(game.getMinBet(), cur / 2)));
@@ -290,7 +293,20 @@ public class GamePlayActivity extends AppCompatActivity {
         btnBetMax.setOnClickListener(v ->
                 etBet.setText(String.format(Locale.US, "%.2f", game.getMaxBet())));
 
-        // Stats screen button
+        // Sound toggle
+        updateSoundToggleIcon();
+        btnSoundToggle.setOnClickListener(v -> {
+            boolean nowEnabled = !SoundManager.get().isEnabled();
+            SoundManager.get().setEnabled(nowEnabled);
+            updateSoundToggleIcon();
+            if (nowEnabled) SoundManager.get().playClick();
+        });
+
+        // Bet calculator
+        btnBetCalc.setOnClickListener(v -> {
+            SoundManager.get().playClick();
+            showBetCalculator();
+        });
         Button btnStats = findViewById(R.id.btnStats);
         if (btnStats != null) {
             btnStats.setOnClickListener(v -> StatsActivity.start(this));
@@ -453,7 +469,7 @@ public class GamePlayActivity extends AppCompatActivity {
         // Achievements
         if(achToast != null){
             java.util.List<String> newAchs = PlayerProfile.get(this)
-                .recordBet(this, game.getGameName(), bet, result, jackpot);
+                    .recordBet(this, game.getGameName(), bet, result, jackpot);
             if(!newAchs.isEmpty()){
                 for(PlayerProfile.Achievement ach : PlayerProfile.ALL_ACHIEVEMENTS){
                     for(String id : newAchs){
@@ -541,7 +557,7 @@ public class GamePlayActivity extends AppCompatActivity {
         // Accent bar at top
         android.view.View bar = new android.view.View(this);
         android.widget.LinearLayout.LayoutParams barLp =
-            new android.widget.LinearLayout.LayoutParams(-1, (int)(6 * getResources().getDisplayMetrics().density));
+                new android.widget.LinearLayout.LayoutParams(-1, (int)(6 * getResources().getDisplayMetrics().density));
         bar.setBackgroundColor(jackpot ? 0xFFFFD84A : win ? 0xFF2DD4BF : 0xFFF87171);
         android.graphics.drawable.GradientDrawable barBg = new android.graphics.drawable.GradientDrawable();
         barBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
@@ -587,10 +603,10 @@ public class GamePlayActivity extends AppCompatActivity {
         android.widget.Button btnHistory = makeDialogBtn("HISTORY", 0xFF1A2030);
         android.widget.Button btnBack    = makeDialogBtn("BACK",    0xFF1A2030);
         android.widget.Button btnAgain   = makeDialogBtn(jackpot ? "CLAIM 🏆" : "PLAY AGAIN",
-                                             jackpot ? 0xFFB8920A : win ? 0xFF0F5040 : 0xFF3A1010);
+                jackpot ? 0xFFB8920A : win ? 0xFF0F5040 : 0xFF3A1010);
         if (jackpot || win) {
             ((android.graphics.drawable.GradientDrawable)btnAgain.getBackground())
-                .setStroke(2, jackpot ? 0xFFFFD84A : 0xFF2DD4BF);
+                    .setStroke(2, jackpot ? 0xFFFFD84A : 0xFF2DD4BF);
             btnAgain.setTextColor(jackpot ? 0xFFFFD84A : 0xFF2DD4BF);
         } else {
             btnAgain.setTextColor(0xFFF87171);
@@ -609,7 +625,7 @@ public class GamePlayActivity extends AppCompatActivity {
         });
 
         android.widget.LinearLayout.LayoutParams btnLp =
-            new android.widget.LinearLayout.LayoutParams(0, (int)(44 * getResources().getDisplayMetrics().density), 1f);
+                new android.widget.LinearLayout.LayoutParams(0, (int)(44 * getResources().getDisplayMetrics().density), 1f);
         btnLp.setMargins(8, 0, 8, 0);
         btnRow.addView(btnHistory, btnLp);
         btnRow.addView(btnBack,    new android.widget.LinearLayout.LayoutParams(0, (int)(44 * getResources().getDisplayMetrics().density), 1f) {{ setMargins(8,0,8,0); }});
@@ -620,8 +636,8 @@ public class GamePlayActivity extends AppCompatActivity {
         if (d.getWindow() != null) {
             d.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             d.getWindow().setLayout(
-                (int)(getResources().getDisplayMetrics().widthPixels * 0.88f),
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                    (int)(getResources().getDisplayMetrics().widthPixels * 0.88f),
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 
         // Entrance animation
@@ -630,9 +646,9 @@ public class GamePlayActivity extends AppCompatActivity {
         root.setScaleY(0.85f);
         d.show();
         root.animate().alpha(1f).scaleX(1f).scaleY(1f)
-            .setDuration(300)
-            .setInterpolator(new android.view.animation.OvershootInterpolator(1.5f))
-            .start();
+                .setDuration(300)
+                .setInterpolator(new android.view.animation.OvershootInterpolator(1.5f))
+                .start();
     }
 
     private android.widget.Button makeDialogBtn(String text, int bgColor) {
@@ -694,6 +710,194 @@ public class GamePlayActivity extends AppCompatActivity {
                 vibrator.vibrate(200);
             }
         } catch (Exception ignored) {}
+    }
+
+    private void updateSoundToggleIcon() {
+        if (btnSoundToggle == null) return;
+        btnSoundToggle.setText(SoundManager.get().isEnabled() ? "🔊" : "🔇");
+        btnSoundToggle.setAlpha(SoundManager.get().isEnabled() ? 1.0f : 0.5f);
+    }
+
+    private void showBetCalculator() {
+        double bet = parseBetField();
+        if (bet <= 0) bet = game.getMinBet();
+
+        double[] table = game.getMultiplierTable();
+        double jackpot  = game.getJackpot();
+        final double betFinal = bet;
+
+        // Build dialog programmatically
+        android.app.Dialog d = new android.app.Dialog(this);
+        d.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+
+        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        root.setPadding(pad, pad, pad, pad);
+
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        bg.setCornerRadius(28f);
+        bg.setColor(0xFF080A18);
+        bg.setStroke(2, 0xFFFFD84A);
+        root.setBackground(bg);
+
+        // Title
+        android.widget.TextView tvTitle = new android.widget.TextView(this);
+        tvTitle.setText(String.format(java.util.Locale.US,
+                "🧮 Bet Calculator  —  %.2f FUN", betFinal));
+        tvTitle.setTextColor(0xFFFFD84A);
+        tvTitle.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+        tvTitle.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        tvTitle.setPadding(0, 0, 0, pad);
+        root.addView(tvTitle);
+
+        // Header row
+        root.addView(makeCalcRow("Outcome", "Multiplier", "Return", true));
+
+        // Jackpot row (1% chance)
+        root.addView(makeCalcRow(
+                "🎰 JACKPOT (1%)",
+                String.format(java.util.Locale.US, "%.0fx", jackpot),
+                String.format(java.util.Locale.US, "+%.2f FUN", betFinal * jackpot - betFinal),
+                false));
+
+        // Divider
+        android.view.View div = new android.view.View(this);
+        div.setBackgroundColor(0x33FFD84A);
+        root.addView(div, new android.widget.LinearLayout.LayoutParams(-1, 1));
+
+        // Multiplier table rows — group identical multipliers
+        java.util.LinkedHashMap<Double, Integer> groups = new java.util.LinkedHashMap<>();
+        for (double m : table) groups.merge(m, 1, Integer::sum);
+
+        for (java.util.Map.Entry<Double, Integer> e : groups.entrySet()) {
+            double mult = e.getKey();
+            int count   = e.getValue();
+            int pct     = count * 10; // each index = 10% chance
+
+            String outcome;
+            int textColor;
+            if (mult == 0.0) {
+                outcome = String.format("❌ No win (%d%%)", pct);
+                textColor = 0xFFF87171;
+            } else if (mult < 1.0) {
+                outcome = String.format("💸 Partial (%d%%)", pct);
+                textColor = 0xFFFFD84A;
+            } else if (mult == 1.0) {
+                outcome = String.format("↩️ Break even (%d%%)", pct);
+                textColor = 0xFF9999BB;
+            } else {
+                outcome = String.format("✨ Win (%d%%)", pct);
+                textColor = 0xFF34D399;
+            }
+
+            double net = betFinal * mult - betFinal;
+            String netStr = net >= 0
+                    ? String.format(java.util.Locale.US, "+%.2f FUN", net)
+                    : String.format(java.util.Locale.US, "%.2f FUN", net);
+
+            android.widget.LinearLayout row = makeCalcRow(
+                    outcome,
+                    String.format(java.util.Locale.US, "%.1fx", mult),
+                    netStr, false);
+
+            // Color the net column
+            android.widget.TextView tvNet =
+                    (android.widget.TextView) row.getChildAt(2);
+            tvNet.setTextColor(textColor);
+            root.addView(row);
+        }
+
+        // Expected value
+        double ev = 0;
+        for (double m : table) ev += m * betFinal / table.length;
+        ev += betFinal * jackpot * 0.01; // jackpot 1%
+        ev -= betFinal * 0.99;           // subtract bet (minus jackpot cases)
+        android.view.View div2 = new android.view.View(this);
+        div2.setBackgroundColor(0x33FFD84A);
+        root.addView(div2, new android.widget.LinearLayout.LayoutParams(-1, 1));
+        android.widget.TextView tvEV = new android.widget.TextView(this);
+        double evFinal = ev;
+        tvEV.setText(String.format(java.util.Locale.US,
+                "Expected value: %+.2f FUN per bet", evFinal));
+        tvEV.setTextColor(ev >= 0 ? 0xFF34D399 : 0xFF9999BB);
+        tvEV.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11);
+        tvEV.setPadding(0, pad / 2, 0, 0);
+        root.addView(tvEV);
+
+        // Close button
+        android.widget.Button btnClose = new android.widget.Button(this);
+        btnClose.setText("CLOSE");
+        btnClose.setTextColor(0xFFFFD84A);
+        btnClose.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 12);
+        btnClose.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD));
+        android.graphics.drawable.GradientDrawable btnBg =
+                new android.graphics.drawable.GradientDrawable();
+        btnBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        btnBg.setCornerRadius(20f);
+        btnBg.setColor(0xFF1A1400);
+        btnBg.setStroke(1, 0xFFFFD84A);
+        btnClose.setBackground(btnBg);
+        android.widget.LinearLayout.LayoutParams btnLp =
+                new android.widget.LinearLayout.LayoutParams(-1,
+                        (int)(44 * getResources().getDisplayMetrics().density));
+        btnLp.topMargin = pad;
+        btnClose.setOnClickListener(v -> d.dismiss());
+        root.addView(btnClose, btnLp);
+
+        d.setContentView(root);
+        if (d.getWindow() != null) {
+            d.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            d.getWindow().setLayout(
+                    (int)(getResources().getDisplayMetrics().widthPixels * 0.92f),
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+        d.show();
+    }
+
+    private android.widget.LinearLayout makeCalcRow(
+            String col1, String col2, String col3, boolean isHeader) {
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        int vPad = (int)(5 * getResources().getDisplayMetrics().density);
+        row.setPadding(0, vPad, 0, vPad);
+
+        int color  = isHeader ? 0xFF888899 : 0xFFCCCCDD;
+        int tsInt  = isHeader ? 10 : 12;
+        int style  = isHeader
+                ? android.graphics.Typeface.NORMAL
+                : android.graphics.Typeface.NORMAL;
+
+        android.widget.TextView tv1 = new android.widget.TextView(this);
+        tv1.setText(col1); tv1.setTextColor(color);
+        tv1.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, tsInt);
+        tv1.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT, style));
+        row.addView(tv1, new android.widget.LinearLayout.LayoutParams(
+                0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 2.2f));
+
+        android.widget.TextView tv2 = new android.widget.TextView(this);
+        tv2.setText(col2); tv2.setTextColor(color); tv2.setGravity(android.view.Gravity.END);
+        tv2.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, tsInt);
+        tv2.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT, style));
+        row.addView(tv2, new android.widget.LinearLayout.LayoutParams(
+                0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 0.9f));
+
+        android.widget.TextView tv3 = new android.widget.TextView(this);
+        tv3.setText(col3); tv3.setTextColor(color); tv3.setGravity(android.view.Gravity.END);
+        tv3.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, tsInt);
+        tv3.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.DEFAULT,
+                isHeader ? style : android.graphics.Typeface.BOLD));
+        row.addView(tv3, new android.widget.LinearLayout.LayoutParams(
+                0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1.1f));
+
+        return row;
     }
 
     @Override
