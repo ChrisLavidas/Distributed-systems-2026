@@ -1,0 +1,11 @@
+{
+  "GameName": "MegaPoker",
+  "ProviderName": "provider1",
+  "Stars": 3,
+  "NoOfVotes": 85,
+  "GameLogo": "/usr/bin/images/megapoker.png",
+  "MinBet": 1.0,
+  "MaxBet": 50,
+  "RiskLevel": "high",
+  "HashKey": "secret_mega_002"
+}

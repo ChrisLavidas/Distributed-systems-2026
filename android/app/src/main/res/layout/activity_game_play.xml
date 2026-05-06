@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.funGames.app.ui.CasinoBackgroundView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:fitsSystemWindows="true">
+
+        <!-- TOP BAR -->
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_app_bar"
+            android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:paddingTop="10dp" android:paddingBottom="10dp"
+            android:elevation="8dp">
+
+            <!-- Row 1: back / title / badges -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+
+                <Button android:id="@+id/btnBack"
+                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:text="←" android:textColor="#FFD84A" android:textSize="18sp"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp" android:minWidth="0dp" android:minHeight="0dp"/>
+
+                <TextView android:id="@+id/tvGameTitle"
+                    android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="4dp"
+                    android:text="Game" android:textColor="@color/text_primary"
+                    android:textSize="16sp" android:textStyle="bold"
+                    android:maxLines="1" android:ellipsize="end"
+                    android:shadowColor="#66FFD84A" android:shadowRadius="8"
+                    android:shadowDx="0" android:shadowDy="0"/>
+
+                <TextView android:id="@+id/tvRiskBadge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="LOW" android:textSize="9sp" android:textStyle="bold"
+                    android:textColor="@color/risk_low" android:background="@drawable/bg_risk_low"
+                    android:paddingStart="7dp" android:paddingEnd="7dp"
+                    android:paddingTop="3dp" android:paddingBottom="3dp"
+                    android:layout_marginEnd="5dp"/>
+
+                <TextView android:id="@+id/tvJackpotBadge"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="JACKPOT" android:textSize="9sp" android:textStyle="bold"
+                    android:textColor="#FFD84A" android:background="@drawable/bg_jackpot_pill"
+                    android:paddingStart="7dp" android:paddingEnd="7dp"
+                    android:paddingTop="3dp" android:paddingBottom="3dp"/>
+            </LinearLayout>
+
+            <!-- Row 2: connection status + bet range -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="22dp"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <com.funGames.app.ui.ConnectionStatusView
+                    android:id="@+id/connStatus"
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+                <TextView android:id="@+id/tvBetRange"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="— FUN" android:textColor="@color/text_muted"
+                    android:textSize="10sp"/>
+
+                <Button android:id="@+id/btnHistory"
+                    android:layout_width="wrap_content" android:layout_height="28dp"
+                    android:text="📊" android:textSize="14sp"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp" android:minWidth="36dp" android:minHeight="0dp"
+                    android:layout_marginStart="6dp"/>
+
+                <Button android:id="@+id/btnStats"
+                    android:layout_width="wrap_content" android:layout_height="28dp"
+                    android:text="🏆" android:textSize="14sp"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp" android:minWidth="36dp" android:minHeight="0dp"
+                    android:layout_marginStart="2dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- WIN STREAK BANNER (overlay, 0-height when hidden) -->
+        <com.funGames.app.ui.WinStreakBannerView
+            android:id="@+id/streakBanner"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:visibility="gone"/>
+
+        <!-- GAME CANVAS -->
+        <FrameLayout android:id="@+id/gameCanvas"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" android:layout_weight="1"/>
+
+        <!-- HISTORY PANEL (hidden by default) -->
+        <com.funGames.app.ui.BetHistoryView
+            android:id="@+id/historyView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0"/>
+
+        <FrameLayout android:id="@+id/historyPanel"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:visibility="gone">
+            <com.funGames.app.ui.BetHistoryView
+                android:id="@+id/historyViewInPanel"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"/>
+        </FrameLayout>
+
+        <!-- BOTTOM PANEL -->
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_dialog"
+            android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:paddingTop="10dp" android:paddingBottom="14dp">
+
+            <!-- Balance row -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_balance_pod"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:paddingTop="7dp" android:paddingBottom="7dp">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="💰 " android:textSize="13sp"/>
+
+                    <com.funGames.app.ui.AnimatedBalanceTextView
+                        android:id="@+id/tvBalance"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="0.00"
+                        android:textColor="#FFD84A" android:textSize="14sp" android:textStyle="bold"
+                        android:shadowColor="#66FFD84A" android:shadowRadius="8"
+                        android:shadowDx="0" android:shadowDy="0"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text=" FUN" android:textColor="#D4AF37" android:textSize="11sp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- Quick win rate badge -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:id="@+id/tvStatus"
+                    android:text="" android:textColor="#FFD84A"
+                    android:textSize="11sp" android:textStyle="bold"
+                    android:layout_marginStart="10dp" android:maxLines="1"
+                    android:shadowColor="#66FFD84A" android:shadowRadius="6"
+                    android:shadowDx="0" android:shadowDy="0"/>
+            </LinearLayout>
+
+            <!-- Quick-bet buttons -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <Button android:id="@+id/btnBetMin"
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:text="MIN"
+                    android:textColor="#FFD84A" android:textSize="10sp" android:textStyle="bold"
+                    android:background="@drawable/btn_secondary"
+                    android:layout_marginEnd="4dp" android:minWidth="0dp" android:padding="0dp"/>
+
+                <Button android:id="@+id/btnBetHalf"
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:text="½"
+                    android:textColor="#FFD84A" android:textSize="12sp" android:textStyle="bold"
+                    android:background="@drawable/btn_secondary"
+                    android:layout_marginEnd="4dp" android:minWidth="0dp" android:padding="0dp"/>
+
+                <Button android:id="@+id/btnBetDouble"
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:text="2x"
+                    android:textColor="#FFD84A" android:textSize="12sp" android:textStyle="bold"
+                    android:background="@drawable/btn_secondary"
+                    android:layout_marginEnd="4dp" android:minWidth="0dp" android:padding="0dp"/>
+
+                <Button android:id="@+id/btnBetMax"
+                    android:layout_width="0dp" android:layout_height="match_parent"
+                    android:layout_weight="1" android:text="MAX"
+                    android:textColor="#FFD84A" android:textSize="10sp" android:textStyle="bold"
+                    android:background="@drawable/btn_secondary"
+                    android:minWidth="0dp" android:padding="0dp"/>
+            </LinearLayout>
+
+            <!-- Bet + Spin -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+
+                <EditText android:id="@+id/etBetAmount"
+                    android:layout_width="0dp" android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:hint="Bet amount (FUN)"
+                    android:textColor="@color/text_primary" android:textColorHint="@color/text_muted"
+                    android:background="@drawable/bg_input"
+                    android:paddingStart="14dp" android:paddingEnd="14dp"
+                    android:inputType="numberDecimal"
+                    android:importantForAutofill="no" android:textSize="15sp"/>
+
+                <Button android:id="@+id/btnSpin"
+                    android:layout_width="114dp" android:layout_height="52dp"
+                    android:text="SPIN"
+                    android:textColor="@color/bg_dark" android:textStyle="bold"
+                    android:textSize="14sp" android:letterSpacing="0.12"
+                    android:background="@drawable/btn_primary"
+                    android:layout_marginStart="10dp" android:elevation="8dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

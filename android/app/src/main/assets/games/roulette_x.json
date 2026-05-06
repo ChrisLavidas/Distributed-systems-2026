@@ -1,0 +1,11 @@
+{
+  "GameName": "RouletteX",
+  "ProviderName": "provider2",
+  "Stars": 5,
+  "NoOfVotes": 200,
+  "GameLogo": "/usr/bin/images/roulettex.png",
+  "MinBet": 5.0,
+  "MaxBet": 100,
+  "RiskLevel": "medium",
+  "HashKey": "secret_roulette_003"
+}

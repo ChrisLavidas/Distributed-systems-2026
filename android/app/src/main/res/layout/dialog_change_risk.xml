@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog"
+    android:padding="22dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙️"
+            android:textSize="22sp"
+            android:layout_marginEnd="10dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dlg_change_risk_title"
+            android:textColor="@color/accent_gold"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/etGameNameR"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:hint="@string/hint_game_name"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:background="@drawable/bg_input"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:inputType="text"
+        android:importantForAutofill="no"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_risk"
+        android:textColor="@color/text_secondary"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView android:id="@+id/rkLow2"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:text="LOW"
+            android:textColor="@color/risk_chip_text"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:letterSpacing="0.1"
+            android:background="@drawable/risk_chip_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="6dp" />
+
+        <TextView android:id="@+id/rkMed2"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:text="MED"
+            android:textColor="@color/risk_chip_text"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:letterSpacing="0.1"
+            android:background="@drawable/risk_chip_bg"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="6dp" />
+
+        <TextView android:id="@+id/rkHigh2"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
+            android:gravity="center"
+            android:text="HIGH"
+            android:textColor="@color/risk_chip_text"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:letterSpacing="0.1"
+            android:background="@drawable/risk_chip_bg"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="22dp">
+
+        <Button
+            android:id="@+id/btnCancelR"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="@string/btn_cancel"
+            android:textColor="@color/accent_gold"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_secondary" />
+
+        <Button
+            android:id="@+id/btnConfirmR"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="@string/btn_confirm_risk"
+            android:textColor="@color/bg_dark"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_primary"
+            android:layout_marginStart="10dp"
+            android:elevation="4dp" />
+    </LinearLayout>
+</LinearLayout>

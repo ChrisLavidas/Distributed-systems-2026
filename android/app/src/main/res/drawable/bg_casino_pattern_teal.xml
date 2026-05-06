@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="400dp"
+    android:height="200dp"
+    android:viewportWidth="400"
+    android:viewportHeight="200"
+    android:alpha="0.07">
+
+    <!-- Spade -->
+    <path
+        android:pathData="M60,40 C52,48 40,56 40,68 C40,76 48,81 55,78 C53,83 51,87 49,90 L71,90 C69,87 67,83 65,78 C72,81 80,76 80,68 C80,56 68,48 60,40 Z"
+        android:fillColor="#2DD4BF" />
+
+    <!-- Heart -->
+    <path
+        android:pathData="M340,30 C340,22 348,16 356,19 C360,21 362,24 362,26 C362,24 364,21 368,19 C376,16 384,22 384,30 C384,42 362,62 362,62 C362,62 340,42 340,30 Z"
+        android:fillColor="#2DD4BF" />
+
+    <!-- Diamond -->
+    <path
+        android:pathData="M210,30 L230,54 L210,78 L190,54 Z"
+        android:fillColor="#5EEAD4" />
+
+    <!-- Club -->
+    <path
+        android:pathData="M140,125 C135,125 130,130 130,136 C130,141 134,146 140,146 C137,148 134,151 134,155 L160,155 C160,151 157,148 154,146 C160,146 164,141 164,136 C164,130 159,125 154,125 C154,119 150,113 147,113 C144,113 140,119 140,125 Z"
+        android:fillColor="#2DD4BF" />
+
+    <!-- Chip -->
+    <path
+        android:pathData="M320,130 m-22,0 a22,22 0 1,1 44,0 a22,22 0 1,1 -44,0"
+        android:strokeColor="#2DD4BF"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M320,130 m-11,0 a11,11 0 1,1 22,0 a11,11 0 1,1 -22,0"
+        android:strokeColor="#2DD4BF"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000" />
+
+    <!-- 7 -->
+    <path
+        android:pathData="M250,70 L286,70 L286,78 L267,130 L255,130 L274,84 L250,84 Z"
+        android:fillColor="#2DD4BF" />
+
+</vector>

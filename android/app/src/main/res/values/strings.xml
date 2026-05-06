@@ -1,0 +1,144 @@
+<resources>
+    <string name="app_name">Online Casino</string>
+
+    <!-- Login -->
+    <string name="login_title">ONLINE CASINO</string>
+    <string name="login_tagline">Premium Casino Experience</string>
+    <string name="login_subtitle">Sign in to start playing</string>
+    <string name="hint_player_id">Player ID · e.g. AN1234</string>
+    <string name="hint_initial_balance">Starting balance (FUN)</string>
+    <string name="hint_master_host">Master host</string>
+    <string name="hint_master_port">Port</string>
+    <string name="btn_login">Enter Lobby</string>
+    <string name="login_tip">Tip · For emulator use 10.0.2.2 · For a real device use your PC\'s LAN IP</string>
+    <string name="section_player_profile">Player Profile</string>
+    <string name="section_server_config">Server Connection</string>
+
+    <string name="err_invalid_player_id">Player ID must be 2 capital letters + 4 digits</string>
+    <string name="err_invalid_balance">Balance must be &#8805; 0</string>
+    <string name="err_invalid_host">Host cannot be empty</string>
+    <string name="err_invalid_port">Port must be 1..65535</string>
+
+    <!-- Main -->
+    <string name="balance_label">Wallet</string>
+    <string name="fun_suffix">FUN</string>
+    <string name="player_label">Player</string>
+    <string name="section_filters">Search Filters</string>
+    <string name="hint_min_stars">Minimum stars (0-5)</string>
+    <string name="label_bet_category">Bet category</string>
+    <string name="label_risk">Risk level</string>
+    <string name="btn_search">Search Games</string>
+    <string name="btn_add_balance">Add</string>
+    <string name="btn_logout">Exit</string>
+
+    <!-- Results -->
+    <string name="no_results">No games match your filters.\nTry adjusting them above.</string>
+    <string name="initial_empty">Adjust your filters and tap Search to see available games.</string>
+    <string name="search_in_progress">Searching games…</string>
+
+    <!-- Play dialog -->
+    <string name="dlg_play_title">Place Your Bet</string>
+    <string name="hint_bet_amount">Bet amount (FUN)</string>
+    <string name="btn_place_bet">Place Bet</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_rate">Rate</string>
+
+    <!-- Rate dialog -->
+    <string name="dlg_rate_title">Rate This Game</string>
+    <string name="dlg_rate_subtitle">Tap a star to rate</string>
+    <string name="hint_stars">Stars (1-5)</string>
+    <string name="btn_submit">Submit Rating</string>
+
+    <!-- Add balance dialog -->
+    <string name="dlg_addbal_title">Top Up Wallet</string>
+    <string name="dlg_addbal_subtitle">Add FUN tokens to keep playing</string>
+    <string name="hint_amount">Amount (FUN)</string>
+    <string name="btn_add">Add Tokens</string>
+
+    <!-- Messages -->
+    <string name="msg_bet_too_low">Bet below minimum for this game</string>
+    <string name="msg_bet_too_high">Bet above maximum for this game</string>
+    <string name="msg_bet_over_balance">Bet exceeds your current balance</string>
+    <string name="msg_bet_positive">Bet must be greater than 0</string>
+    <string name="msg_rated">Thanks for rating!</string>
+    <string name="msg_balance_added">Balance updated</string>
+
+    <!-- Search chips content-descriptions -->
+    <string name="chip_all">ALL</string>
+
+    <!-- ====================== Role selector ====================== -->
+    <string name="role_player">PLAYER</string>
+    <string name="role_manager">MANAGER</string>
+    <string name="lbl_player_id">Player Profile</string>
+    <string name="lbl_manager_id">Manager Profile</string>
+    <string name="hint_manager_id">Manager ID · e.g. AK1234</string>
+    <string name="btn_login_player">Enter Lobby</string>
+    <string name="btn_login_manager">Open Console</string>
+    <string name="err_invalid_manager_id">Manager ID must be 2 capital letters + 4 digits</string>
+
+    <!-- ====================== Manager UI ====================== -->
+    <string name="mgr_title">Manager Console</string>
+    <string name="tab_games">GAMES</string>
+    <string name="tab_provider">BY PROVIDER</string>
+    <string name="tab_player">BY PLAYER</string>
+    <string name="tab_system">SYSTEM</string>
+
+    <string name="mgr_games_title">Game Management</string>
+    <string name="mgr_games_desc">Add, remove, or change the risk level of games across all providers.</string>
+    <string name="btn_add_game">+ Add Game</string>
+    <string name="btn_remove_game">Remove Game</string>
+    <string name="btn_change_risk">Change Risk Level</string>
+
+    <!-- Action card titles/descriptions -->
+    <string name="action_add_game_title">Add New Game</string>
+    <string name="action_add_game_desc">Register a game with limits, risk, and hash key</string>
+    <string name="action_risk_title">Change Risk Level</string>
+    <string name="action_risk_desc">Update payout profile for an existing game</string>
+    <string name="action_remove_title">Remove Game</string>
+    <string name="action_remove_desc">Deactivate a game — stats remain available</string>
+
+    <string name="mgr_provider_title">Stats by Provider</string>
+    <string name="mgr_provider_desc">Aggregated win/loss results across every game per provider.</string>
+    <string name="mgr_player_title">Stats by Player</string>
+    <string name="mgr_player_desc">Aggregated profit/loss results across every player.</string>
+    <string name="btn_run_query">Run Query</string>
+    <string name="msg_running">Running query…</string>
+    <string name="msg_no_stats">No data yet — once players place bets, results will appear here.</string>
+
+    <string name="mgr_system_title">System</string>
+    <string name="fmt_manager_id">Signed in as %1$s</string>
+    <string name="fmt_conn_info">Connected to %1$s : %2$d</string>
+    <string name="btn_logout_mgr">Sign out</string>
+
+    <!-- Add game dialog -->
+    <string name="dlg_add_game_title">Add New Game</string>
+    <string name="hint_game_name">Game name (e.g. LuckySlots)</string>
+    <string name="hint_provider">Provider (e.g. provider1)</string>
+    <string name="hint_min_bet">Min bet (0.1 / 1 / 5)</string>
+    <string name="hint_max_bet">Max bet</string>
+    <string name="hint_logo_path">Logo path</string>
+    <string name="hint_hash_key">Hash key (shared secret with SRG)</string>
+    <string name="btn_confirm_add">Add Game</string>
+    <string name="err_fields_required">All fields are required</string>
+    <string name="dlg_select_game_title">Select a Game File</string>
+    <string name="err_no_json_files">No game files found in assets</string>
+    <string name="err_select_game">Please select a game</string>
+    <string name="err_bet_range">Bet range invalid (min > 0, max &#8805; min)</string>
+
+    <!-- Remove dialog -->
+    <string name="dlg_remove_title">Remove Game</string>
+    <string name="btn_remove">Remove</string>
+
+    <!-- Change risk dialog -->
+    <string name="dlg_change_risk_title">Change Risk Level</string>
+    <string name="btn_confirm_risk">Update Risk</string>
+
+    <string name="dlg_result_title">Result</string>
+    <string name="btn_ok">OK</string>
+
+    <!-- Result messages -->
+    <string name="msg_game_added">Game \"%1$s\" added successfully.</string>
+    <string name="msg_game_removed">Game \"%1$s\" removed.</string>
+    <string name="msg_risk_updated">Risk of \"%1$s\" set to %2$s.</string>
+    <string name="msg_error_prefix">Error: %1$s</string>
+</resources>

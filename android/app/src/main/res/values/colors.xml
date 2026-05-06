@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds -->
+    <color name="bg_dark">#0A0800</color>
+    <color name="bg_dark_elev">#100D00</color>
+    <color name="bg_surface">#1A1400</color>
+    <color name="bg_surface_variant">#221B00</color>
+    <color name="bg_surface_high">#2E2400</color>
+    <!-- Gradients -->
+    <color name="grad_navy_top">#1A1200</color>
+    <color name="grad_navy_bottom">#0A0800</color>
+    <color name="grad_purple_top">#2E1A00</color>
+    <color name="grad_purple_bottom">#150E00</color>
+    <color name="grad_appbar_top">#1F1700</color>
+    <color name="grad_appbar_bottom">#0A0800</color>
+    <!-- Dividers -->
+    <color name="divider">#2A2000</color>
+    <color name="divider_soft">#1A1400</color>
+    <color name="border_glow">#44D4AF37</color>
+    <!-- Text -->
+    <color name="text_primary">#FFF8E7</color>
+    <color name="text_secondary">#C8A96E</color>
+    <color name="text_muted">#7A6030</color>
+    <!-- Gold -->
+    <color name="accent_gold">#FFD700</color>
+    <color name="accent_gold_bright">#FFE84D</color>
+    <color name="accent_gold_variant">#D4AF37</color>
+    <color name="accent_gold_deep">#B8860B</color>
+    <color name="accent_gold_soft">#33FFD700</color>
+    <color name="accent_gold_glow">#66FFD700</color>
+    <!-- Accents -->
+    <color name="accent_violet">#C9A84C</color>
+    <color name="accent_violet_deep">#A07830</color>
+    <color name="accent_pink">#F4C842</color>
+    <color name="accent_cyan">#FFD700</color>
+    <!-- Risk -->
+    <color name="risk_low">#34D399</color>
+    <color name="risk_low_bg">#1F34D399</color>
+    <color name="risk_medium">#FBBF24</color>
+    <color name="risk_medium_bg">#1FFBBF24</color>
+    <color name="risk_high">#F87171</color>
+    <color name="risk_high_bg">#1FF87171</color>
+    <!-- Chips -->
+    <color name="chip_bg">#1A1400</color>
+    <color name="chip_bg_selected">#FFD700</color>
+    <color name="chip_text">#C8A96E</color>
+    <color name="chip_text_selected">#0A0800</color>
+    <color name="chip_border">#2A2000</color>
+    <!-- Win/Lose -->
+    <color name="win_green">#34D399</color>
+    <color name="win_green_deep">#059669</color>
+    <color name="lose_red">#F87171</color>
+    <color name="lose_red_deep">#DC2626</color>
+    <!-- Utility -->
+    <color name="glass_white">#0FFFFFFF</color>
+    <color name="glass_white_border">#22FFFFFF</color>
+    <color name="scrim">#BB000000</color>
+    <!-- Bet -->
+    <color name="bet_dollar1">#86EFAC</color>
+    <color name="bet_dollar2">#FBBF24</color>
+    <color name="bet_dollar3">#F87171</color>
+    <!-- Manager — luxury gold theme -->
+    <color name="mgr_teal">#D4AF37</color>
+    <color name="mgr_teal_bright">#FFD700</color>
+    <color name="mgr_teal_deep">#8B6914</color>
+    <color name="mgr_teal_soft">#33D4AF37</color>
+    <color name="mgr_bg_top">#1A1200</color>
+    <color name="mgr_bg_mid">#0F0C00</color>
+    <!-- Manager tab -->
+    <color name="mgr_tab_text">#8A7040</color>
+</resources>

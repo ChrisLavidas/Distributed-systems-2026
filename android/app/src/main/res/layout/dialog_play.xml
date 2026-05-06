@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎲"
+            android:textSize="24sp"
+            android:layout_marginEnd="10dp"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dlg_play_title"
+            android:textColor="@color/accent_gold"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+    </LinearLayout>
+
+    <!-- Game info pod -->
+    <TextView
+        android:id="@+id/tvGameInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/text_primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginTop="14dp"
+        android:gravity="center" />
+
+    <!-- Bet limits -->
+    <TextView
+        android:id="@+id/tvBetLimits"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/text_muted"
+        android:textSize="12sp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="16dp"
+        android:gravity="center" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Bet amount input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BET AMOUNT"
+        style="@style/SectionLabel"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/etBetAmount"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:hint="@string/hint_bet_amount"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:background="@drawable/bg_input"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:inputType="numberDecimal"
+        android:importantForAutofill="no"
+        android:textSize="15sp" />
+
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:text="@string/btn_cancel"
+            android:textColor="@color/accent_gold"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_secondary" />
+
+        <Button
+            android:id="@+id/btnPlaceBet"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:text="@string/btn_place_bet"
+            android:textColor="@color/bg_dark"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_primary"
+            android:layout_marginStart="12dp"
+            android:elevation="4dp" />
+    </LinearLayout>
+</LinearLayout>

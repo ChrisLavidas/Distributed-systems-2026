@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="7. Dummy Player" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="player.DummyPlayer" />
+    <module name="3230096_3230188_3230064" />
+    <option name="PROGRAM_PARAMETERS" value="localhost 5000 5010 AB1234 500.0" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

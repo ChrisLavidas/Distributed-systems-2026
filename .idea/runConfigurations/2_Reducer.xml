@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="2. Reducer" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="reducer.Reducer" />
+    <option name="PROGRAM_PARAMETERS" value="7000" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <module name="3230096_3230188_3230064" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

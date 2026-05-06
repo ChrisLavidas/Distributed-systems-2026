@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog"
+    android:padding="24dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="★"
+            android:textSize="24sp"
+            android:textColor="@color/accent_gold"
+            android:layout_marginEnd="10dp"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dlg_rate_title"
+            android:textColor="@color/accent_gold"
+            android:textSize="19sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.03" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvRateGameName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:layout_marginTop="14dp"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/dlg_rate_subtitle"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
+        android:letterSpacing="0.12"
+        android:textAllCaps="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Stars -->
+    <LinearLayout
+        android:id="@+id/starContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center_horizontal"
+        android:background="@drawable/bg_info_pod"
+        android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/star1"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="☆"
+            android:textSize="36sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/star2"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="☆"
+            android:textSize="36sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/star3"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="☆"
+            android:textSize="36sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/star4"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="☆"
+            android:textSize="36sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:includeFontPadding="false" />
+
+        <TextView
+            android:id="@+id/star5"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:text="☆"
+            android:textSize="36sp"
+            android:textColor="@color/text_muted"
+            android:clickable="true"
+            android:focusable="true"
+            android:includeFontPadding="false" />
+    </LinearLayout>
+    </LinearLayout>
+
+    <!-- Actions -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:text="@string/btn_cancel"
+            android:textColor="@color/accent_gold"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_secondary" />
+
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="50dp"
+            android:text="@string/btn_submit"
+            android:textColor="@color/bg_dark"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:letterSpacing="0.12"
+            android:textAllCaps="true"
+            android:background="@drawable/btn_primary"
+            android:layout_marginStart="12dp"
+            android:enabled="false"
+            android:alpha="0.5"
+            android:elevation="4dp" />
+    </LinearLayout>
+</LinearLayout>

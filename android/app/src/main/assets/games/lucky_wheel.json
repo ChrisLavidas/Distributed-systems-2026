@@ -1,0 +1,11 @@
+{
+    "GameName": "luckywheel",
+    "ProviderName": "provider4",
+    "Stars": 2,
+    "NoOfVotes": 200,
+    "GameLogo": "/usr/bin/images/luckywheel.png",
+    "MinBet": 5.0,
+    "MaxBet": 100,
+    "RiskLevel": "medium",
+    "HashKey": "lucky_wheel004"
+}

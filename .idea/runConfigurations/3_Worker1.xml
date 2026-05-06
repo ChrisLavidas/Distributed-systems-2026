@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="3. Worker 1" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="worker.WorkerNode" />
+    <module name="3230096_3230188_3230064" />
+    <option name="PROGRAM_PARAMETERS" value="0 5001 localhost 6000 localhost 7000" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

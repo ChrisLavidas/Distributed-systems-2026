@@ -1,0 +1,7 @@
+#!/bin/sh
+# Gradle wrapper script — minimal. Use Android Studio for builds instead;
+# this placeholder only exists so the project has the expected layout.
+# If you need to build from CLI, install Gradle 8.4 and run:
+#   gradle assembleDebug
+echo "Please open this project in Android Studio, or install Gradle 8.4 and run: gradle assembleDebug"
+exit 1

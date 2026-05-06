@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Golden star centered -->
+    <path
+        android:pathData="M54,30 L60.18,46.74 L78,47.58 L64.24,58.92 L68.8,76.2 L54,66.6 L39.2,76.2 L43.76,58.92 L30,47.58 L47.82,46.74 Z"
+        android:fillColor="#F5C842"/>
+</vector>

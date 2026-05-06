@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.funGames.app.ui.CasinoBackgroundView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- APP BAR -->
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_app_bar"
+            android:paddingStart="20dp" android:paddingEnd="20dp"
+            android:paddingTop="14dp" android:paddingBottom="14dp"
+            android:elevation="8dp">
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+
+                <ImageView android:layout_width="36dp" android:layout_height="36dp"
+                    android:src="@drawable/ic_casino_logo"
+                    android:contentDescription="@string/app_name"/>
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical"
+                    android:layout_marginStart="12dp">
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="@string/app_name"
+                        android:textColor="#FFD84A" android:textSize="17sp" android:textStyle="bold"
+                        android:shadowColor="#88FFD84A" android:shadowRadius="12"
+                        android:shadowDx="0" android:shadowDy="0"/>
+
+                    <com.funGames.app.ui.ConnectionStatusView
+                        android:id="@+id/connStatusMain"
+                        android:layout_width="wrap_content" android:layout_height="18dp"/>
+                </LinearLayout>
+
+                <Button android:id="@+id/btnLogout"
+                    android:layout_width="wrap_content" android:layout_height="38dp"
+                    android:text="@string/btn_logout"
+                    android:textColor="@color/text_secondary" android:textSize="11sp"
+                    android:letterSpacing="0.15" android:textAllCaps="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:minWidth="0dp" android:paddingStart="10dp" android:paddingEnd="10dp"/>
+            </LinearLayout>
+
+            <!-- Balance pod -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/bg_balance_pod"
+                android:padding="12dp" android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+
+                    <TextView android:id="@+id/tvPlayerId"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="@string/player_label"
+                        android:textColor="@color/text_secondary" android:textSize="11sp"
+                        android:textStyle="bold" android:letterSpacing="0.12"
+                        android:textAllCaps="true"/>
+
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="@string/balance_label" style="@style/SectionLabel"
+                        android:layout_marginTop="2dp"/>
+
+                    <LinearLayout android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="bottom"
+                        android:layout_marginTop="2dp">
+
+                        <com.funGames.app.ui.AnimatedBalanceTextView
+                            android:id="@+id/tvBalance"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="0.00" android:textColor="#FFD84A"
+                            android:textSize="28sp" android:textStyle="bold"
+                            android:includeFontPadding="false"
+                            android:shadowColor="#66FFD84A" android:shadowRadius="14"
+                            android:shadowDx="0" android:shadowDy="0"/>
+
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="@string/fun_suffix"
+                            android:textColor="#D4AF37" android:textSize="13sp"
+                            android:textStyle="bold" android:letterSpacing="0.1"
+                            android:layout_marginStart="6dp" android:layout_marginBottom="4dp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <Button android:id="@+id/btnStats"
+                    android:layout_width="44dp" android:layout_height="44dp"
+                    android:text="📊"
+                    android:textSize="18sp"
+                    android:background="@drawable/btn_secondary"
+                    android:minWidth="0dp" android:layout_marginEnd="8dp"/>
+
+                <Button android:id="@+id/btnAddBalance"
+                    android:layout_width="wrap_content" android:layout_height="44dp"
+                    android:text="+  ADD"
+                    android:textColor="@color/bg_dark" android:textStyle="bold"
+                    android:textSize="12sp" android:letterSpacing="0.12"
+                    android:background="@drawable/btn_primary"
+                    android:paddingStart="18dp" android:paddingEnd="18dp"
+                    android:minWidth="0dp" android:elevation="6dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- DAILY BONUS BANNER (shown conditionally) -->
+        <LinearLayout android:id="@+id/dailyBonusBanner"
+            android:layout_width="match_parent" android:layout_height="48dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:background="#CC1A6644"
+            android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:visibility="gone">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🎁  Daily Bonus available!  +100 FUN"
+                android:textColor="#FFD84A" android:textStyle="bold" android:textSize="13sp"/>
+            <Button android:id="@+id/btnClaimBonus"
+                android:layout_width="wrap_content" android:layout_height="34dp"
+                android:text="CLAIM" android:textColor="@color/bg_dark"
+                android:textStyle="bold" android:textSize="11sp"
+                android:background="@drawable/btn_primary"
+                android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:minWidth="0dp"/>
+        </LinearLayout>
+
+        <!-- FILTERS -->
+        <LinearLayout android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginStart="14dp" android:layout_marginEnd="14dp"
+            android:layout_marginTop="10dp"
+            android:elevation="4dp">
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <View android:layout_width="3dp" android:layout_height="12dp"
+                    android:background="#FFD84A" android:layout_marginEnd="8dp"/>
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/section_filters" style="@style/SectionLabel"/>
+
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Min ★" android:textColor="@color/text_secondary"
+                android:textSize="11sp" android:textStyle="bold"
+                android:layout_marginTop="10dp" android:layout_marginBottom="5dp"/>
+
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/chipStarAny" android:text="ALL"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipStar1" android:text="1★"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipStar2" android:text="2★"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipStar3" android:text="3★"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipStar4" android:text="4★"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipStar5" android:text="5★"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/label_bet_category" android:textColor="@color/text_secondary"
+                android:textSize="11sp" android:textStyle="bold"
+                android:layout_marginTop="10dp" android:layout_marginBottom="5dp"/>
+
+            <LinearLayout android:id="@+id/groupBetCat"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/chipBetAny" android:text="@string/chip_all"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipBetDollar" android:text="$"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipBetDollar2" android:text="$$"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipBetDollar3" android:text="$$$"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+            </LinearLayout>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/label_risk" android:textColor="@color/text_secondary"
+                android:textSize="11sp" android:textStyle="bold"
+                android:layout_marginTop="10dp" android:layout_marginBottom="5dp"/>
+
+            <LinearLayout android:id="@+id/groupRisk"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/chipRiskAny" android:text="@string/chip_all"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipRiskLow" android:text="LOW"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipRiskMed" android:text="MED"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1" android:layout_marginEnd="4dp"/>
+                <TextView android:id="@+id/chipRiskHigh" android:text="HIGH"
+                    style="@style/FilterChipStyleCompact"
+                    android:layout_width="0dp" android:layout_weight="1"/>
+            </LinearLayout>
+
+            <Button android:id="@+id/btnSearch"
+                android:layout_width="match_parent" android:layout_height="46dp"
+                android:text="@string/btn_search"
+                android:textColor="@color/bg_dark" android:textStyle="bold"
+                android:textSize="14sp" android:letterSpacing="0.14" android:textAllCaps="true"
+                android:background="@drawable/btn_primary"
+                android:layout_marginTop="12dp" android:elevation="6dp"/>
+        </LinearLayout>
+
+        <!-- LIVE ACTIVITY TICKER -->
+        <com.funGames.app.ui.LiveTickerView
+            android:id="@+id/liveTicker"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_marginBottom="2dp"/>
+
+        <!-- PROMO / SKELETON / EMPTY -->
+        <FrameLayout android:layout_width="match_parent"
+            android:layout_height="0dp" android:layout_weight="1">
+
+            <!-- Skeleton loader -->
+            <com.funGames.app.ui.SkeletonLoadingView
+                android:id="@+id/skeletonLoader"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:layout_margin="14dp"
+                android:visibility="gone"/>
+
+            <!-- Ready state -->
+            <LinearLayout android:id="@+id/readyState"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center" android:padding="24dp">
+
+                <FrameLayout android:layout_width="80dp" android:layout_height="80dp">
+                    <View android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:background="@drawable/bg_logo_placeholder" android:alpha="0.9"/>
+                    <TextView android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:gravity="center" android:text="🎰"
+                        android:textSize="38sp" android:includeFontPadding="false"/>
+                </FrameLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="READY TO PLAY"
+                    android:textColor="#FFD84A" android:textSize="11sp" android:textStyle="bold"
+                    android:letterSpacing="0.28" android:layout_marginTop="14dp"
+                    android:shadowColor="#66FFD84A" android:shadowRadius="12"
+                    android:shadowDx="0" android:shadowDy="0"/>
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Hidden compat views -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="0dp"
+            android:visibility="gone">
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvGames"
+                android:layout_width="0dp" android:layout_height="0dp"/>
+            <TextView android:id="@+id/tvEmpty"
+                android:layout_width="0dp" android:layout_height="0dp"/>
+            <ProgressBar android:id="@+id/progress"
+                android:layout_width="0dp" android:layout_height="0dp"/>
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

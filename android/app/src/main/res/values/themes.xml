@@ -1,0 +1,145 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.FunGamesApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/accent_gold</item>
+        <item name="colorPrimaryDark">@color/bg_dark</item>
+        <item name="colorAccent">@color/accent_gold</item>
+        <item name="android:colorBackground">@color/bg_dark</item>
+        <item name="android:windowBackground">@color/bg_dark</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:statusBarColor" tools:targetApi="l">@color/bg_dark</item>
+        <item name="android:navigationBarColor" tools:targetApi="l">@color/bg_dark</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+        <item name="android:alertDialogTheme">@style/FunGamesAlertDialog</item>
+        <item name="alertDialogTheme">@style/FunGamesAlertDialog</item>
+    </style>
+
+    <!-- Custom alert dialog theme (για new AlertDialog.Builder) -->
+    <style name="FunGamesAlertDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:colorAccent">@color/accent_gold</item>
+        <item name="colorAccent">@color/accent_gold</item>
+        <item name="android:textColorAlertDialogListItem">@color/text_primary</item>
+        <item name="android:windowTitleStyle">@style/FunGamesAlertDialog.Title</item>
+        <item name="buttonBarPositiveButtonStyle">@style/FunGamesAlertDialog.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/FunGamesAlertDialog.Button</item>
+        <item name="buttonBarNeutralButtonStyle">@style/FunGamesAlertDialog.Button</item>
+    </style>
+
+    <style name="FunGamesAlertDialog.Title" parent="android:TextAppearance">
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textSize">19sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="FunGamesAlertDialog.Button" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
+    <!-- =========================================================
+         Typography styles
+         ========================================================= -->
+
+    <style name="HeroTitle">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">42sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="HeroSubtitle">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:letterSpacing">0.03</item>
+    </style>
+
+    <style name="CardTitle">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="CardSubtitle">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <style name="SectionLabel">
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.18</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="MutedCaption">
+        <item name="android:textColor">@color/text_muted</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <style name="BalanceNumber">
+        <item name="android:textColor">@color/accent_gold</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <!-- =========================================================
+         Filter chip
+         ========================================================= -->
+
+    <style name="FilterChipStyle">
+        <item name="android:layout_width">46dp</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/chip_bg</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:elevation">1dp</item>
+    </style>
+
+    <!-- Compact variant για το main screen -->
+    <style name="FilterChipStyleCompact">
+        <item name="android:layout_height">34dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/chip_bg</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <!-- =========================================================
+         Pills
+         ========================================================= -->
+
+    <style name="RiskPill">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.1</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+</resources>

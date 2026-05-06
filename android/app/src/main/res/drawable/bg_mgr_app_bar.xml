@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- semi-transparent dark base so background shows through -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#CC0D2A2E"
+                android:centerColor="#BB081820"
+                android:endColor="#AA030408" />
+        </shape>
+    </item>
+    <!-- soft teal radial glow -->
+    <item android:gravity="top|left">
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:centerX="0.15"
+                android:centerY="0"
+                android:gradientRadius="300dp"
+                android:startColor="#222DD4BF"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+    <!-- casino pattern overlay -->
+    <item android:drawable="@drawable/bg_casino_pattern_teal" />
+    <!-- bottom teal hairline -->
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <size android:height="1dp" />
+            <solid android:color="#662DD4BF" />
+        </shape>
+    </item>
+</layer-list>

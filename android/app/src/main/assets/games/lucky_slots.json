@@ -1,0 +1,11 @@
+{
+  "GameName": "LuckySlots",
+  "ProviderName": "provider1",
+  "Stars": 4,
+  "NoOfVotes": 120,
+  "GameLogo": "/usr/bin/images/luckyslots.png",
+  "MinBet": 0.1,
+  "MaxBet": 10,
+  "RiskLevel": "low",
+  "HashKey": "secret_lucky_001"
+}
