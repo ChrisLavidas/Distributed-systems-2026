@@ -110,19 +110,16 @@ public class DummyPlayer {
 
         List<Game> results = new ArrayList<>();
         try { //sends the search results to the master
-            Socket             server = new Socket(masterHost, masterPort);
-            ObjectOutputStream out    = new ObjectOutputStream(server.getOutputStream());
-            out.flush();
-            ObjectInputStream  in     = new ObjectInputStream(server.getInputStream());
+            Socket server = new Socket(masterHost, masterPort);
+            SecureChannel ch = SecureChannel.clientSide(server);
 
             final String request = Protocol.build(Protocol.SEARCH, minStars, betCat, risk);
-            out.writeUTF(request);
-            out.flush();
+            ch.writeUTF(request);
 
             System.out.println("\n--- Search Results ---");
             String line;
             int    idx = 1;
-            while (!(line = in.readUTF()).equals(Protocol.END)) {
+            while (!(line = ch.readUTF()).equals(Protocol.END)) {
                 String[] p = Protocol.parse(line);
                 if (p[0].equals(Protocol.MAP_RESULT)) {
                     StringBuilder tsb = new StringBuilder();
@@ -138,7 +135,7 @@ public class DummyPlayer {
             if (results.isEmpty()) System.out.println("  (no games found)");
             server.close();
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.out.println("Search error: " + e.getMessage());
         }
         return results;
@@ -178,9 +175,9 @@ public class DummyPlayer {
     }
 
 
-     //(This / Another)
-     //"this"    → returns lastPlayed directly (no search needed)
-     //"another" → runs a new search, player picks from results;
+    //(This / Another)
+    //"this"    → returns lastPlayed directly (no search needed)
+    //"another" → runs a new search, player picks from results;
     private Game askThisOrAnother(Scanner sc, List<Game> lastResults, Game lastPlayed) {
         while (true) {
             System.out.print("This game or another one? (This / Another): ");
