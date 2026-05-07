@@ -4,3 +4,4 @@ out/
 android/local.properties
 bin/
 Master
+.claude/
