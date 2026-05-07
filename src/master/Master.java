@@ -795,10 +795,21 @@ public class Master {
 
                 Thread t = new Thread(() -> {
                     try {
-                        String response = sendToWorker(
-                                workerHost(game.getGameName()), workerPort(game.getGameName()),
-                                Protocol.build(Protocol.WORKER_PLAY, simPlayer, game.getGameName(),
-                                        String.format(java.util.Locale.US, "%.2f", bet)));
+                        // Route through the Master's own handlePlay (loopback socket) so that:
+                        // 1. Replica SYNC_PLAY fires and all Workers stay in sync
+                        // 2. broadcastBet fires for the live ticker
+                        // 3. Stats appear on all Workers, not just the primary
+                        Socket loopback = new Socket("localhost", masterPort);
+                        String response;
+                        try {
+                            SecureChannel loopCh = SecureChannel.clientSide(loopback);
+                            loopCh.writeUTF(Protocol.build(Protocol.PLAY, simPlayer,
+                                    game.getGameName(),
+                                    String.format(java.util.Locale.US, "%.2f", bet)));
+                            response = loopCh.readUTF();
+                        } finally {
+                            loopback.close();
+                        }
                         String[] p = Protocol.parse(response);
                         if (p[0].equals(Protocol.OK)) {
                             double result = Double.parseDouble(p[1]);
@@ -810,14 +821,13 @@ public class Master {
                                         simPlayer, game.getGameName(),
                                         jackpot ? "JACKPOT +" : "+", net,
                                         jackpot ? " ★" : ""));
-                                broadcastBet(simPlayer, game.getGameName(),
-                                        String.format(java.util.Locale.US, "%.2f", bet),
-                                        String.format(java.util.Locale.US, "%.2f", result), jackpot);
                             } else {
                                 synchronized (losses) { losses[0]++; }
                                 results.add(String.format("%s  %-15s  %.2f FUN",
                                         simPlayer, game.getGameName(), net));
                             }
+                        } else {
+                            results.add(simPlayer + "  ERROR: " + (p.length > 1 ? p[1] : response));
                         }
                     } catch (Exception e) {
                         results.add(simPlayer + "  ERROR: " + e.getMessage());
