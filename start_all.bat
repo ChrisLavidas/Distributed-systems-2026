@@ -29,7 +29,7 @@ timeout /t 1 /nobreak >nul
 start "Worker2 - port 5002"  cmd /k "cd /d %~dp0 && java -cp bin worker.WorkerNode 1 5002 localhost 6000 localhost 7000"
 timeout /t 1 /nobreak >nul
 
-start "Master - port 5000"   cmd /k "cd /d %~dp0 && java -cp bin master.Master 5000 localhost 7000 localhost:5001 localhost:5002"
+start "Master - port 5000"   cmd /k "cd /d %~dp0 && java -cp bin master.Master 5000 5003 localhost 7000 localhost:5001 localhost:5002"
 
 echo.
 echo Ολα τα components εκκινησαν σε ξεχωριστα παραθυρα.

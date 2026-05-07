@@ -40,19 +40,43 @@ Tapping a game takes you to its dedicated screen. LuckySlots shows spinning reel
 
 ## Running the backend
 
-All components compile with a single command and start in separate terminal windows. On Windows, just double-click `start_all.bat`. On Linux/Mac:
+This is a **distributed system** — each component (SRG, Reducer, Worker, Master) is an independent process that communicates with the others over TCP sockets. This means you can run every component on the **same machine** using `localhost`, or spread them across **multiple machines** on the same network by replacing `localhost` with the actual IP address of each machine. The system works either way without any code changes.
+
+### Option A — One machine (Windows)
+
+Double-click `start_all.bat`. It compiles everything and opens each component in its own terminal window automatically.
+
+### Option B — One machine (Linux / Mac)
 
 ```bash
 find src -name "*.java" > sources.txt && javac -d bin @sources.txt
 
-java -cp bin srg.SecureRandomGenerator 6000   # start first
+java -cp bin srg.SecureRandomGenerator 6000        # start first
 java -cp bin reducer.Reducer 7000
 java -cp bin worker.WorkerNode 0 5001 localhost 6000 localhost 7000
 java -cp bin worker.WorkerNode 1 5002 localhost 6000 localhost 7000
-java -cp bin master.Master 5000 localhost 7000 localhost:5001 localhost:5002
+java -cp bin master.Master 5000 5003 localhost 7000 localhost:5001 localhost:5002
 ```
 
-Once the backend is running, open the Manager console to load games from the `sample_data/` folder, then connect with the Android app or the DummyPlayer.
+### Option C — Multiple machines
+
+Run each component on a different machine. Replace `localhost` with the actual IP of the machine running that component:
+
+```bash
+# Machine A (e.g. 192.168.1.10) — runs SRG and Reducer
+java -cp bin srg.SecureRandomGenerator 6000
+java -cp bin reducer.Reducer 7000
+
+# Machine B (e.g. 192.168.1.11) — runs Workers and Master
+java -cp bin worker.WorkerNode 0 5001 192.168.1.10 6000 192.168.1.10 7000
+java -cp bin worker.WorkerNode 1 5002 192.168.1.10 6000 192.168.1.10 7000
+java -cp bin master.Master 5000 5003 192.168.1.10 7000 192.168.1.11:5001 192.168.1.11:5002
+
+# Machine C — runs the Android app or DummyPlayer, connecting to Machine B
+java -cp bin player.DummyPlayer 192.168.1.11 5000 5001 AB1234 100.0
+```
+
+Once the backend is running, open the Android app to play as a Player or launch the Manager console — both connect to the same backend.
 
 ---
 
@@ -64,7 +88,7 @@ Every single connection in the system is a raw TCP socket. The Master listens on
 
 ### Multithreading with `synchronized` and `wait/notify`
 
-No `java.util.concurrent` was used anywhere. Every shared data structure — the game registry, the bet history, the subscriber list — is protected with plain `synchronized` blocks. Threads coordinate through `wait()` and `notifyAll()`. This is most visible in the SRG, where a producer thread and a consumer thread share a buffer per game and block each other correctly without any locks or semaphores from the concurrency library.
+No `java.util.concurrent` was used anywhere. Every shared data structure the game registry, the bet history, the subscriber list  is protected with plain `synchronized` blocks. Threads coordinate through `wait()` and `notifyAll()`. This is most visible in the SRG, where a producer thread and a consumer thread share a buffer per game and block each other correctly without any locks or semaphores from the concurrency library.
 
 ### Producer-Consumer the Secure Random Generator
 
@@ -85,7 +109,7 @@ Every game stored on Worker 1 is simultaneously replicated to Worker 2, and vice
 All game data, bet history, player ratings, and running stats live in standard Java collections inside the Worker and Reducer JVMs. Nothing is persisted to disk during normal operation. The only dependency is the standard JDK — no external library was used anywhere in the project.
 
 
-
+# **Extras**
 ## Security  Encrypted TCP with Diffie-Hellman + AES
 
 ### The problem
@@ -99,7 +123,7 @@ ADD_BALANCE~~player1~~500.0
 OK~~added
 ```
 
-With 50–100 observations per game an attacker could reconstruct the full multiplier table of every game — effectively learning the casino's business model without being a Manager. They could replay a winning packet to collect the same prize multiple times, or impersonate a Manager to add and remove games at will.
+With 50–100 observations per game an attacker could reconstruct the full multiplier table of every game and effectively learn the casino's business model without being a Manager. They could replay a winning packet to collect the same prize multiple times, or impersonate a Manager to add and remove games at will.
 
 <p align="center">
   <img src="screenshots/wireshark_before.png" width="850"/>
@@ -108,9 +132,9 @@ With 50–100 observations per game an attacker could reconstruct the full multi
 
 ### The solution
 
-We implemented a `SecureChannel` class that wraps every **external** TCP connection (Player → Master and Manager → Master) with end-to-end encryption, using only `javax.crypto`, `java.security`, and `java.math.BigInteger` — all part of the standard JDK, within the assignment constraints. Internal channels (Master ↔ Worker, Master ↔ Reducer, Master ↔ SRG) were intentionally left as plain `ObjectOutputStream` TCP since they run on a trusted local network.
+We implemented a `SecureChannel` class that wraps every **external** TCP connection (Player → Master and Manager → Master) with end-to-end encryption, using only `javax.crypto`, `java.security`, and `java.math.BigInteger` all part of the standard JDK, within the assignment constraints. Internal channels (Master ↔ Worker, Master ↔ Reducer, Master ↔ SRG) were intentionally left as plain `ObjectOutputStream` TCP since they run on a trusted local network.
 
-The handshake works like this. When a connection opens, both sides independently generate a random ephemeral key pair using Diffie-Hellman over RFC 2409 Group 2 (1024-bit MODP). They exchange only their **public** keys over the wire. Each side then computes the shared secret independently — mathematically, `(g^a)^b = (g^b)^a = g^(ab)` — so the secret itself is never transmitted. A 128-bit AES key is derived by taking the first 16 bytes of `SHA-256(shared_secret)`.
+The handshake works like this. When a connection opens, both sides independently generate a random ephemeral key pair using Diffie-Hellman over RFC 2409 Group 2 (1024-bit MODP). They exchange only their **public** keys over the wire. Each side then computes the shared secret independently  mathematically, `(g^a)^b = (g^b)^a = g^(ab)`  so the secret itself is never transmitted. A 128-bit AES key is derived by taking the first 16 bytes of `SHA-256(shared_secret)`.
 
 ```
 Player                           Master

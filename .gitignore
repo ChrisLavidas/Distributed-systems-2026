@@ -2,3 +2,5 @@ android/app/build/
 android/.gradle/
 out/
 android/local.properties
+bin/
+Master
