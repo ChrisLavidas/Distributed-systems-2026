@@ -21,7 +21,7 @@ import android.view.View;
  */
 public class CasinoBackgroundView extends View {
 
-    /* ── bokeh ───────────────────────────────────────────────────── */
+    // bokeh  
     private static final int BOKEH = 16;
     protected final float[] bx  = new float[BOKEH];
     protected final float[] by  = new float[BOKEH];
@@ -30,7 +30,7 @@ public class CasinoBackgroundView extends View {
     protected final float[] bph = new float[BOKEH];    // phase
     private final int[]   bcol= new int[BOKEH];
 
-    /* ── suits ───────────────────────────────────────────────────── */
+    // suits 
     private static final String[] SUITS = {"♠","♥","♦","♣","★"};
     private static final int  SUIT_COUNT = 12;
     protected final float[] sx  = new float[SUIT_COUNT];
@@ -40,14 +40,14 @@ public class CasinoBackgroundView extends View {
     protected final float[] ssp = new float[SUIT_COUNT]; // rot speed
     protected final int[]   sidx= new int[SUIT_COUNT];
 
-    /* ── chips ───────────────────────────────────────────────────── */
+    // chips 
     private static final int CHIPS = 10;
     protected final float[] chipAngle = new float[CHIPS];
     protected final float[] chipR     = new float[CHIPS]; // orbit radius factor
     protected final float[] chipSp    = new float[CHIPS]; // orbit speed
     private final int[]   chipColor = new int[CHIPS];
 
-    /* ── paints ──────────────────────────────────────────────────── */
+    // paints  
     private final Paint vigP   = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint gridP  = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint suitP  = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -122,14 +122,14 @@ public class CasinoBackgroundView extends View {
         int W = getWidth(), H = getHeight();
         if (W == 0 || H == 0) return;
 
-        // ── 1. base gradient ─────────────────────────────────────────
+        //  1. base gradient 
         Paint basePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         basePaint.setShader(new RadialGradient(W/2f, H*.35f, Math.max(W,H)*.8f,
                 new int[]{0xFF0E1138, 0xFF07091A, 0xFF030408},
                 new float[]{0f, .55f, 1f}, Shader.TileMode.CLAMP));
         canvas.drawRect(0,0,W,H,basePaint);
 
-        // ── 2. bokeh ─────────────────────────────────────────────────
+        //  2. bokeh 
         for (int i = 0; i < BOKEH; i++) {
             float phase = (float)(bph[i] + tick * bsp[i] * Math.PI * 2);
             float cx = (bx[i] + (float)(Math.sin(phase)*.06f)) * W;
@@ -140,7 +140,7 @@ public class CasinoBackgroundView extends View {
             canvas.drawCircle(cx, cy, r, bp);
         }
 
-        // ── 3. diagonal grid (felt texture) ──────────────────────────
+        //  3. diagonal grid (felt texture) 
         int gridStep = Math.max(W,H) / 22;
         gridP.setColor(0x08D4AF37);
         for (int i = -H; i < W+H; i += gridStep) {
@@ -152,7 +152,7 @@ public class CasinoBackgroundView extends View {
         for (int x = 0; x < W; x += gridStep) canvas.drawLine(x, 0, x, H, gridP);
         for (int y = 0; y < H; y += gridStep) canvas.drawLine(0, y, W, y, gridP);
 
-        // ── 4. floating suits ─────────────────────────────────────────
+        //  4. floating suits 
         for (int i = 0; i < SUIT_COUNT; i++) {
             float rot = srt[i] + tick * ssp[i] * 360f;
             float cx  = sx[i] * W;
@@ -166,7 +166,7 @@ public class CasinoBackgroundView extends View {
             canvas.restore();
         }
 
-        // ── 5. centre glow pulse ──────────────────────────────────────
+        //  5. centre glow pulse 
         float pulse = .5f + .5f * (float)Math.sin(tick * Math.PI * 2 * .8f);
         Paint gp = new Paint(Paint.ANTI_ALIAS_FLAG);
         gp.setShader(new RadialGradient(W/2f, H/2f, Math.min(W,H)*.55f,
@@ -174,7 +174,7 @@ public class CasinoBackgroundView extends View {
                 null, Shader.TileMode.CLAMP));
         canvas.drawRect(0, 0, W, H, gp);
 
-        // ── 6. orbiting chips ────────────────────────────────────────
+        //  6. orbiting chips 
         float orbitCX = W/2f, orbitCY = H/2f;
         for (int i = 0; i < CHIPS; i++) {
             float a  = (float)Math.toRadians(chipAngle[i] + tick * chipSp[i] * 360f);
@@ -194,7 +194,7 @@ public class CasinoBackgroundView extends View {
             canvas.drawCircle(cx, cy, cr*.7f, chipRP);
         }
 
-        // ── 7. top vignette ───────────────────────────────────────────
+        //  7. top vignette 
         Paint topFade = new Paint();
         topFade.setShader(new LinearGradient(0, 0, 0, H*.25f,
                 0x55000000, 0x00000000, Shader.TileMode.CLAMP));
