@@ -1,5 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Splash Screen Theme -->
+    <style name="Theme.FunGamesApp.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/bg_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/bg_dark</item>
+        <item name="postSplashScreenTheme">@style/Theme.FunGamesApp</item>
+    </style>
+
     <style name="Theme.FunGamesApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/accent_gold</item>
         <item name="colorPrimaryDark">@color/bg_dark</item>

@@ -2,6 +2,6 @@
 <project version="4">
   <component name="ScalaCompilerConfiguration">
     <option name="separateProdTestSources" value="true" />
-    <profile name="sbt 1" modules="final_project,final_project.main,final_project.test,project,project.main,project.test,project_9851,project_9851.main,project_9851.test" />
+    <profile name="sbt 1" modules="distributed-systems-2026,distributed-systems-2026.main,distributed-systems-2026.test,final_project,final_project.main,final_project.test,project,project.main,project.test,project_9851,project_9851.main,project_9851.test" />
   </component>
 </project>

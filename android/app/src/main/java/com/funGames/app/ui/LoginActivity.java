@@ -9,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
 
 import com.funGames.app.R;
 import com.funGames.app.util.Session;
@@ -34,6 +35,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
@@ -116,7 +118,7 @@ public class LoginActivity extends AppCompatActivity {
 
         if (selectedRole == Role.PLAYER) {
             Double balance = Validators.parseDecimal(etBalance.getText().toString());
-            if (balance == null || balance < 0) {
+            if (balance == null || balance < 0 || balance > 1_000_000) {
                 toast(getString(R.string.err_invalid_balance));
                 return;
             }

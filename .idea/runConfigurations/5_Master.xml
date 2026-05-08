@@ -2,7 +2,7 @@
   <configuration default="false" name="5. Master" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="master.Master" />
     <module name="3230096_3230188_3230064" />
-    <option name="PROGRAM_PARAMETERS" value="5000 5010 localhost 7000 localhost:5001 localhost:5002 localhost:5003 localhost:5004" />
+    <option name="PROGRAM_PARAMETERS" value="5000 5010 localhost 7000 localhost:5001 localhost:5002" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

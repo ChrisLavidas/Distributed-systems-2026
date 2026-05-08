@@ -23,6 +23,12 @@ public class AnimatedBalanceTextView extends AppCompatTextView {
 
     public void animateTo(double target) {
         if (anim != null) anim.cancel();
+        // If the value is too large for float animation, just set it immediately
+        if (Double.isInfinite(target) || Double.isNaN(target)
+                || target > 1_000_000_000.0 || target < -1_000_000_000.0) {
+            setValueImmediate(target);
+            return;
+        }
         double from = current;
         anim = ValueAnimator.ofFloat((float) from, (float) target);
         anim.setDuration(700);

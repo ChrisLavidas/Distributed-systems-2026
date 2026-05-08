@@ -3,10 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/3230096_3230188_3230064.iml" filepath="$PROJECT_DIR$/.idea/3230096_3230188_3230064.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/final_project/final_project.iml" filepath="$PROJECT_DIR$/.idea/modules/final_project/final_project.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/final_project/final_project.final_project-build.iml" filepath="$PROJECT_DIR$/.idea/modules/final_project/final_project.final_project-build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/final_project/final_project.main.iml" filepath="$PROJECT_DIR$/.idea/modules/final_project/final_project.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/final_project/final_project.test.iml" filepath="$PROJECT_DIR$/.idea/modules/final_project/final_project.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.iml" filepath="$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.distributed-systems-2026-build.iml" filepath="$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.distributed-systems-2026-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.test.iml" filepath="$PROJECT_DIR$/.idea/modules/Distributed-systems-2026/distributed-systems-2026.test.iml" />
     </modules>
   </component>
 </project>
