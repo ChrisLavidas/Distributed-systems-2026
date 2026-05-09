@@ -3,5 +3,5 @@ android/.gradle/
 out/
 android/local.properties
 bin/
-Master
+out/Master
 .claude/
