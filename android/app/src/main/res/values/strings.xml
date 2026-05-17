@@ -15,7 +15,7 @@
     <string name="section_server_config">Server Connection</string>
 
     <string name="err_invalid_player_id">Player ID must be 2 capital letters + 4 digits</string>
-    <string name="err_invalid_balance">Balance must be &#8805; 0</string>
+    <string name="err_invalid_balance">Balance must be between 0 and 1,000,000 FUN</string>
     <string name="err_invalid_host">Host cannot be empty</string>
     <string name="err_invalid_port">Port must be 1..65535</string>
 
