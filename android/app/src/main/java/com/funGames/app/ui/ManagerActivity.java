@@ -386,7 +386,8 @@ public class ManagerActivity extends AppCompatActivity {
         long t = System.currentTimeMillis();
         client.checkAnyGameAsync((ok,p)->{
             long ms = System.currentTimeMillis()-t;
-            if(ok) csv.setOnline(ms); else csv.setOffline();
+            boolean connected = ok || !p.startsWith("Network error");
+            if(connected) csv.setOnline(ms); else csv.setOffline();
         });
     }
 

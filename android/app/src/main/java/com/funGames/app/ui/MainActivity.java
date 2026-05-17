@@ -252,7 +252,8 @@ public class MainActivity extends AppCompatActivity
         long t = System.currentTimeMillis();
         session.getClient().checkAnyGameAsync((ok, p) -> {
             long ms = System.currentTimeMillis() - t;
-            if (ok) csv.setOnline(ms); else csv.setOffline();
+            boolean connected = ok || !p.startsWith("Network error");
+            if (connected) csv.setOnline(ms); else csv.setOffline();
         });
     }
 

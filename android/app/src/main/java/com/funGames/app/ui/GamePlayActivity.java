@@ -338,8 +338,9 @@ public class GamePlayActivity extends AppCompatActivity {
         long start = System.currentTimeMillis();
         session.getClient().checkAnyGameAsync((ok, payload) -> {
             long ms = System.currentTimeMillis() - start;
-            if (ok) connStatus.setOnline(ms);
-            else    connStatus.setOffline();
+            boolean connected = ok || !payload.startsWith("Network error");
+            if (connected) connStatus.setOnline(ms);
+            else           connStatus.setOffline();
         });
     }
 
