@@ -40,6 +40,16 @@ public class SessionPrefs {
     public static String getRole    (Context ctx){ return ctx.getSharedPreferences(PREF,0).getString(KEY_ROLE,"PLAYER"); }
     public static double getBalance (Context ctx){ return Double.longBitsToDouble(ctx.getSharedPreferences(PREF,0).getLong(KEY_BAL,0L)); }
 
+    public static void savePlayerBalance(Context ctx, String userId, double balance) {
+        ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit()
+                .putLong("bal_" + userId, Double.doubleToLongBits(balance))
+                .apply();
+    }
+
+    public static double getPlayerBalance(Context ctx, String userId) {
+        return Double.longBitsToDouble(ctx.getSharedPreferences(PREF, 0).getLong("bal_" + userId, 0L));
+    }
+
     public static void saveApiKey(Context ctx, String key) {
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY_API, key).apply();
     }
