@@ -452,11 +452,17 @@ public class WorkerNode {
     private void handleStatsProvider(String[] parts, ObjectOutputStream out) throws IOException {
         String mapId = parts[1];
 
-        List<Game>          gameSnapshot;
-        Map<String, Double> balanceSnapshot;
+        // Calculate house balance from allBets excluding stress-test bots (SM prefix)
+        Map<String, String>  gameProvider   = new LinkedHashMap<>(); // gameName -> providerName
+        Map<String, Double>  balanceByGame  = new LinkedHashMap<>();
         synchronized (lock) {
-            gameSnapshot    = new ArrayList<>(games.values());
-            balanceSnapshot = new HashMap<>(houseBalance);
+            for (BetRecord bet : allBets) {
+                if (!primaryGameNames.contains(bet.getGameName())) continue; // skip replica bets
+                if (bet.getPlayerId().startsWith("SM")) continue;            // skip stress-test bots
+                gameProvider.put(bet.getGameName(), bet.getProviderName());
+                balanceByGame.merge(bet.getGameName(),
+                        bet.getBetAmount() - bet.getPlayerResult(), Double::sum);
+            }
         }
 
         // Connect to Reducer OUTSIDE lock — stats are already snapshotted above
@@ -467,15 +473,15 @@ public class WorkerNode {
         rOut.flush();
         ObjectInputStream  rIn  = new ObjectInputStream(reducerSocket.getInputStream());
 
-        for (Game g : gameSnapshot) {
-            if (!primaryGameNames.contains(g.getGameName())) continue; // skip replicas
-            double balance = balanceSnapshot.getOrDefault(g.getGameName(), 0.0);
+        for (Map.Entry<String, Double> e : balanceByGame.entrySet()) {
+            String gameName    = e.getKey();
+            String providerName = gameProvider.get(gameName);
             // MAP_RESULT_PROVIDER~~mapId~~providerName~~gameName~~houseBalance
             rOut.writeUTF(Protocol.build(Protocol.MAP_RESULT_PROVIDER,
                     mapId,
-                    g.getProviderName(),
-                    g.getGameName(),
-                    String.format(Locale.US, "%.2f", balance)));
+                    providerName,
+                    gameName,
+                    String.format(Locale.US, "%.2f", e.getValue())));
             rOut.flush();
         }
         rOut.writeUTF(Protocol.build(Protocol.END, mapId));
@@ -650,6 +656,7 @@ public class WorkerNode {
         synchronized (lock) {
             for (BetRecord bet : allBets) {
                 if (!primaryGameNames.contains(bet.getGameName())) continue; // skip replica bets
+                if (bet.getPlayerId().startsWith("SM")) continue;            // skip stress-test bots
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
             }
