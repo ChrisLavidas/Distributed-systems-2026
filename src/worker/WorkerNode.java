@@ -23,7 +23,11 @@ public class WorkerNode {
     private final int    reducerPort;
 
     // In-memory storage
-    private final Object                  lock         = new Object();
+    // gamesLock: protects games, primaryGameNames, replicaOwnerMap
+    private final Object                  gamesLock    = new Object();
+    // betsLock: protects allBets and houseBalance
+    private final Object                  betsLock     = new Object();
+
     private final Map<String, Game>       games        = new HashMap<>();
     // gameName -> net result from house perspective (positive = house earned)
     private final Map<String, Double>     houseBalance = new HashMap<>();
@@ -109,8 +113,8 @@ public class WorkerNode {
                     case Protocol.WORKER_SEARCH_ALL:                handleSearchAll(parts, out);            break;
                     case Protocol.WORKER_STATS_PROVIDER_MR_REPLICA: handleStatsProviderReplica(parts, out); break;
                     case Protocol.WORKER_STATS_PLAYER_MR_REPLICA:   handleStatsPlayerReplica(parts, out);   break;
-                    case Protocol.WORKER_LEADERBOARD_MR:            handleLeaderboard(parts, out);          break; // NEW
-                    case Protocol.WORKER_LEADERBOARD_MR_REPLICA:    handleLeaderboardReplica(parts, out);   break; // NEW
+                    case Protocol.WORKER_LEADERBOARD_MR:            handleLeaderboard(parts, out);          break;
+                    case Protocol.WORKER_LEADERBOARD_MR_REPLICA:    handleLeaderboardReplica(parts, out);   break;
                     default:
                         out.writeUTF(Protocol.build(Protocol.ERROR, "Unknown command: " + cmd));
                         out.flush();
@@ -124,50 +128,50 @@ public class WorkerNode {
     }
 
     // Command handlers
+
     // WORKER_PING - returns worker stats: activeGames, totalBets
     private void handlePing(ObjectOutputStream out) throws IOException {
         int activeGames = 0;
-        int totalBets;
-        synchronized (lock) {
-            for (Game g : games.values()) if (g.isActive() && primaryGameNames.contains(g.getGameName())) activeGames++;
-            totalBets = allBets.size();
+        synchronized (gamesLock) {
+            for (Game g : games.values())
+                if (g.isActive() && primaryGameNames.contains(g.getGameName())) activeGames++;
         }
+        int totalBets;
+        synchronized (betsLock) { totalBets = allBets.size(); }
         out.writeUTF(Protocol.build(Protocol.OK, String.valueOf(activeGames), String.valueOf(totalBets)));
         out.flush();
     }
 
     // WORKER_CHECK_ANY returns OK if there is at least one active game, otherwise ERROR.
     private void handleCheckAny(ObjectOutputStream out) throws IOException {
-        synchronized (lock) {
+        boolean found = false;
+        synchronized (gamesLock) {
             for (Game g : games.values()) {
-                if (g.isActive()) {
-                    out.writeUTF(Protocol.build(Protocol.OK, "Active games exist"));
-                    out.flush();
-                    return;
-                }
+                if (g.isActive()) { found = true; break; }
             }
         }
-        out.writeUTF(Protocol.build(Protocol.ERROR, "No active games"));
+        if (found) {
+            out.writeUTF(Protocol.build(Protocol.OK, "Active games exist"));
+        } else {
+            out.writeUTF(Protocol.build(Protocol.ERROR, "No active games"));
+        }
         out.flush();
     }
 
-    // WORKER_CHECK ( returns OK if present & active, otherwise ERROR.)
+    // WORKER_CHECK (returns OK if present & active, otherwise ERROR.)
     private void handleCheck(String[] parts, ObjectOutputStream out) throws IOException {
         String gameName = parts[1];
-        synchronized (lock) {
+        String response;
+        synchronized (gamesLock) {
             Game g = games.get(gameName);
-            if (g == null) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found: " + gameName));
-                out.flush();
-                return;
-            }
-            if (!g.isActive()) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game is inactive: " + gameName));
-                out.flush();
-                return;
-            }
+            if (g == null)
+                response = Protocol.build(Protocol.ERROR, "Game not found: " + gameName);
+            else if (!g.isActive())
+                response = Protocol.build(Protocol.ERROR, "Game is inactive: " + gameName);
+            else
+                response = Protocol.build(Protocol.OK, "OK");
         }
-        out.writeUTF(Protocol.build(Protocol.OK, "OK"));
+        out.writeUTF(response);
         out.flush();
     }
 
@@ -176,15 +180,15 @@ public class WorkerNode {
     // Used by the Master to re-hydrate a primary worker that has restarted.
     private void handleGetGame(String[] parts, ObjectOutputStream out) throws IOException {
         String gameName = parts[1];
-        synchronized (lock) {
+        String response;
+        synchronized (gamesLock) {
             Game g = games.get(gameName);
-            if (g == null || !g.isActive()) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found or inactive: " + gameName));
-                out.flush();
-                return;
-            }
-            out.writeUTF(Protocol.build(Protocol.OK, g.toTransportString()));
+            if (g == null || !g.isActive())
+                response = Protocol.build(Protocol.ERROR, "Game not found or inactive: " + gameName);
+            else
+                response = Protocol.build(Protocol.OK, g.toTransportString());
         }
+        out.writeUTF(response);
         out.flush();
     }
 
@@ -196,51 +200,55 @@ public class WorkerNode {
             sb.append(parts[i]);
         }
         Game game = Game.fromTransportString(sb.toString());
-        synchronized (lock) {
+        String response;
+        synchronized (gamesLock) {
             Game existing = games.get(game.getGameName());
             if (existing != null) {
                 if (existing.isActive()) {
                     System.out.println("[Worker-" + workerId + "] Duplicate: " + game.getGameName());
-                    out.writeUTF(Protocol.build(Protocol.ERROR,
-                            "Game already exists: " + game.getGameName()));
+                    response = Protocol.build(Protocol.ERROR, "Game already exists: " + game.getGameName());
+                    out.writeUTF(response);
                     out.flush();
                     return;
                 } else {
                     games.put(game.getGameName(), game);
-                    primaryGameNames.add(game.getGameName()); // ensure it's tracked as primary again
+                    primaryGameNames.add(game.getGameName());
                     System.out.println("[Worker-" + workerId + "] Game re-activated: " + game.getGameName());
-                    out.writeUTF(Protocol.build(Protocol.OK,
-                            "Game re-activated: " + game.getGameName()));
+                    out.writeUTF(Protocol.build(Protocol.OK, "Game re-activated: " + game.getGameName()));
                     out.flush();
                     return;
                 }
             }
             games.put(game.getGameName(), game);
-            houseBalance.put(game.getGameName(), 0.0);
             primaryGameNames.add(game.getGameName());
+        }
+        synchronized (betsLock) {
+            houseBalance.put(game.getGameName(), 0.0);
         }
         System.out.println("[Worker-" + workerId + "] Game added: " + game.getGameName());
         out.writeUTF(Protocol.build(Protocol.OK, "Game added: " + game.getGameName()));
         out.flush();
     }
 
-    //WORKER_REMOVE
+    // WORKER_REMOVE
     private void handleRemove(String[] parts, ObjectOutputStream out) throws IOException {
         String gameName = parts[1];
-        synchronized (lock) {
+        String response;
+        synchronized (gamesLock) {
             Game g = games.get(gameName);
             if (g == null) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found: " + gameName));
-                out.flush();
-                return;
+                response = Protocol.build(Protocol.ERROR, "Game not found: " + gameName);
+            } else if (!g.isActive()) {
+                response = Protocol.build(Protocol.ERROR, "Game is already inactive: " + gameName);
+            } else {
+                g.setActive(false); // keep for stats, hide from search
+                response = null;
             }
-            if (!g.isActive()) {
-                out.writeUTF(Protocol.build(Protocol.ERROR,
-                        "Game is already inactive: " + gameName));
-                out.flush();
-                return;
-            }
-            g.setActive(false); // keep for stats, hide from search
+        }
+        if (response != null) {
+            out.writeUTF(response);
+            out.flush();
+            return;
         }
         System.out.println("[Worker-" + workerId + "] Game deactivated: " + gameName);
         out.writeUTF(Protocol.build(Protocol.OK, "Game deactivated: " + gameName));
@@ -251,16 +259,16 @@ public class WorkerNode {
     private void handleUpdateRisk(String[] parts, ObjectOutputStream out) throws IOException {
         String gameName = parts[1];
         String newRisk  = parts[2];
-        synchronized (lock) {
-            Game g = games.get(gameName);
-            if (g == null) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found: " + gameName));
-                out.flush();
-                return;
-            }
+        Game g;
+        synchronized (gamesLock) { g = games.get(gameName); }
+        if (g == null) {
+            out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found: " + gameName));
+            out.flush();
+            return;
+        }
+        synchronized (g) {
             if (!g.isActive()) {
-                out.writeUTF(Protocol.build(Protocol.ERROR,
-                        "Cannot update inactive game: " + gameName));
+                out.writeUTF(Protocol.build(Protocol.ERROR, "Cannot update inactive game: " + gameName));
                 out.flush();
                 return;
             }
@@ -271,14 +279,14 @@ public class WorkerNode {
         out.flush();
     }
 
-    //WORKER_SEARCH
+    // WORKER_SEARCH
     private void handleSearch(String[] parts, ObjectOutputStream out) throws IOException {
         String minStarsStr  = parts[1];
         String betCatFilter = parts[2];
         String riskFilter   = parts[3];
 
         List<Game> snapshot;
-        synchronized (lock) {
+        synchronized (gamesLock) {
             snapshot = new ArrayList<>(games.values());
         }
 
@@ -323,10 +331,10 @@ public class WorkerNode {
             return;
         }
 
-        // Snapshot game info under lock, then release before calling SRG
-        // This prevents one worker's SRG timeout from blocking all others
+        // Validate and snapshot game reference under gamesLock — then release before calling SRG.
+        // This prevents one worker's SRG timeout from blocking all others.
         final Game game;
-        synchronized (lock) {
+        synchronized (gamesLock) {
             Game g = games.get(gameName);
             if (g == null || !g.isActive()) {
                 out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found or inactive"));
@@ -342,7 +350,7 @@ public class WorkerNode {
             game = g; // snapshot reference — lock released after this block
         }
 
-        // SRG call happens OUTSIDE the lock — other requests can proceed in parallel
+        // SRG call happens OUTSIDE any lock — other requests can proceed in parallel
         int randomNumber;
         try {
             randomNumber = getRandomFromSRG(gameName, game.getHashKey());
@@ -356,8 +364,8 @@ public class WorkerNode {
         double playerResult = computeResult(randomNumber, betAmount, game);
         double houseEarning = betAmount - playerResult;
 
-        // Re-acquire lock only for the quick in-memory update
-        synchronized (lock) {
+        // Re-acquire betsLock only for the quick in-memory update
+        synchronized (betsLock) {
             houseBalance.merge(gameName, houseEarning, Double::sum);
             allBets.add(new BetRecord(playerId, gameName,
                     game.getProviderName(), betAmount, playerResult));
@@ -426,16 +434,17 @@ public class WorkerNode {
             out.flush();
             return;
         }
-        synchronized (lock) {
-            Game g = games.get(gameName);
-            if (g == null) {
-                out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found"));
-                out.flush();
-                return;
-            }
+        Game g;
+        synchronized (gamesLock) { g = games.get(gameName); }
+        if (g == null) {
+            out.writeUTF(Protocol.build(Protocol.ERROR, "Game not found"));
+            out.flush();
+            return;
+        }
+        // Per-game lock: concurrent ratings on the same game must be serialized
+        synchronized (g) {
             if (!g.isActive()) {
-                out.writeUTF(Protocol.build(Protocol.ERROR,
-                        "Cannot rate inactive game: " + gameName));
+                out.writeUTF(Protocol.build(Protocol.ERROR, "Cannot rate inactive game: " + gameName));
                 out.flush();
                 return;
             }
@@ -448,16 +457,19 @@ public class WorkerNode {
     }
 
 
-    //WORKER_STATS_PROVIDER_MR
+    // WORKER_STATS_PROVIDER_MR
     private void handleStatsProvider(String[] parts, ObjectOutputStream out) throws IOException {
         String mapId = parts[1];
 
-        // Calculate house balance from allBets excluding stress-test bots (SM prefix)
-        Map<String, String>  gameProvider   = new LinkedHashMap<>(); // gameName -> providerName
+        // Snapshot primaryGameNames first (under gamesLock), then iterate allBets (under betsLock)
+        Set<String> primarySnapshot;
+        synchronized (gamesLock) { primarySnapshot = new HashSet<>(primaryGameNames); }
+
+        Map<String, String>  gameProvider   = new LinkedHashMap<>();
         Map<String, Double>  balanceByGame  = new LinkedHashMap<>();
-        synchronized (lock) {
+        synchronized (betsLock) {
             for (BetRecord bet : allBets) {
-                if (!primaryGameNames.contains(bet.getGameName())) continue; // skip replica bets
+                if (!primarySnapshot.contains(bet.getGameName())) continue; // skip replica bets
                 if (bet.getPlayerId().startsWith("SM")) continue;            // skip stress-test bots
                 gameProvider.put(bet.getGameName(), bet.getProviderName());
                 balanceByGame.merge(bet.getGameName(),
@@ -465,7 +477,7 @@ public class WorkerNode {
             }
         }
 
-        // Connect to Reducer OUTSIDE lock — stats are already snapshotted above
+        // Connect to Reducer OUTSIDE any lock — stats are already snapshotted above
         Socket             reducerSocket = new Socket();
         reducerSocket.connect(new InetSocketAddress(reducerHost, reducerPort), 5000);
         reducerSocket.setSoTimeout(5000);
@@ -476,18 +488,15 @@ public class WorkerNode {
         for (Map.Entry<String, Double> e : balanceByGame.entrySet()) {
             String gameName    = e.getKey();
             String providerName = gameProvider.get(gameName);
-            // MAP_RESULT_PROVIDER~~mapId~~providerName~~gameName~~houseBalance
             rOut.writeUTF(Protocol.build(Protocol.MAP_RESULT_PROVIDER,
-                    mapId,
-                    providerName,
-                    gameName,
+                    mapId, providerName, gameName,
                     String.format(Locale.US, "%.2f", e.getValue())));
             rOut.flush();
         }
         rOut.writeUTF(Protocol.build(Protocol.END, mapId));
         rOut.flush();
 
-        rIn.readUTF(); // waiting ACK από Reducer
+        rIn.readUTF(); // waiting ACK from Reducer
         reducerSocket.close();
 
         System.out.println("[Worker-" + workerId + "] MAP provider done, mapId=" + mapId);
@@ -507,7 +516,7 @@ public class WorkerNode {
             sb.append(parts[i]);
         }
         Game game = Game.fromTransportString(sb.toString());
-        synchronized (lock) {
+        synchronized (gamesLock) {
             Game existing = games.get(game.getGameName());
             if (existing != null && existing.isActive()) {
                 out.writeUTF(Protocol.build(Protocol.OK, "Replica already stored: " + game.getGameName()));
@@ -515,8 +524,10 @@ public class WorkerNode {
                 return;
             }
             games.put(game.getGameName(), game);
-            houseBalance.put(game.getGameName(), 0.0);
             replicaOwnerMap.put(game.getGameName(), ownerIndex);
+        }
+        synchronized (betsLock) {
+            houseBalance.put(game.getGameName(), 0.0);
         }
         System.out.println("[Worker-" + workerId + "] Replica added: " + game.getGameName() + " (owner=" + ownerIndex + ")");
         out.writeUTF(Protocol.build(Protocol.OK, "Replica added: " + game.getGameName()));
@@ -530,9 +541,13 @@ public class WorkerNode {
         double betAmount    = Double.parseDouble(parts[3]);
         double playerResult = Double.parseDouble(parts[4]);
         double houseEarning = Double.parseDouble(parts[5]);
-        synchronized (lock) {
+
+        String providerName;
+        synchronized (gamesLock) {
             Game g = games.get(gameName);
-            String providerName = (g != null) ? g.getProviderName() : "unknown";
+            providerName = (g != null) ? g.getProviderName() : "unknown";
+        }
+        synchronized (betsLock) {
             houseBalance.merge(gameName, houseEarning, Double::sum);
             allBets.add(new BetRecord(playerId, gameName, providerName, betAmount, playerResult));
         }
@@ -549,7 +564,7 @@ public class WorkerNode {
         String riskFilter   = parts[3];
 
         List<Game> snapshot;
-        synchronized (lock) {
+        synchronized (gamesLock) {
             snapshot = new ArrayList<>(games.values());
         }
 
@@ -573,9 +588,14 @@ public class WorkerNode {
         int    deadWorkerIdx = Integer.parseInt(parts[2]);
 
         List<Game>          gameSnapshot;
-        Map<String, Double> balanceSnapshot;
-        synchronized (lock) {
+        Map<String, Integer> replicaSnapshot;
+        synchronized (gamesLock) {
             gameSnapshot    = new ArrayList<>(games.values());
+            replicaSnapshot = new HashMap<>(replicaOwnerMap);
+        }
+
+        Map<String, Double> balanceSnapshot;
+        synchronized (betsLock) {
             balanceSnapshot = new HashMap<>(houseBalance);
         }
 
@@ -587,7 +607,7 @@ public class WorkerNode {
         ObjectInputStream  rIn  = new ObjectInputStream(reducerSocket.getInputStream());
 
         for (Game g : gameSnapshot) {
-            Integer owner = replicaOwnerMap.get(g.getGameName());
+            Integer owner = replicaSnapshot.get(g.getGameName());
             if (owner == null || owner != deadWorkerIdx) continue;
             double balance = balanceSnapshot.getOrDefault(g.getGameName(), 0.0);
             rOut.writeUTF(Protocol.build(Protocol.MAP_RESULT_PROVIDER,
@@ -612,10 +632,13 @@ public class WorkerNode {
         String mapId        = parts[1];
         int    deadWorkerIdx = Integer.parseInt(parts[2]);
 
+        Map<String, Integer> replicaSnapshot;
+        synchronized (gamesLock) { replicaSnapshot = new HashMap<>(replicaOwnerMap); }
+
         Map<String, Double> playerPnL = new LinkedHashMap<>();
-        synchronized (lock) {
+        synchronized (betsLock) {
             for (BetRecord bet : allBets) {
-                Integer owner = replicaOwnerMap.get(bet.getGameName());
+                Integer owner = replicaSnapshot.get(bet.getGameName());
                 if (owner == null || owner != deadWorkerIdx) continue;
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
@@ -652,10 +675,13 @@ public class WorkerNode {
     private void handleStatsPlayer(String[] parts, ObjectOutputStream out) throws IOException {
         String mapId = parts[1];
 
+        Set<String> primarySnapshot;
+        synchronized (gamesLock) { primarySnapshot = new HashSet<>(primaryGameNames); }
+
         Map<String, Double> playerPnL = new LinkedHashMap<>();
-        synchronized (lock) {
+        synchronized (betsLock) {
             for (BetRecord bet : allBets) {
-                if (!primaryGameNames.contains(bet.getGameName())) continue; // skip replica bets
+                if (!primarySnapshot.contains(bet.getGameName())) continue; // skip replica bets
                 if (bet.getPlayerId().startsWith("SM")) continue;            // skip stress-test bots
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
@@ -670,10 +696,8 @@ public class WorkerNode {
         ObjectInputStream  rIn  = new ObjectInputStream(reducerSocket.getInputStream());
 
         for (Map.Entry<String, Double> e : playerPnL.entrySet()) {
-            // MAP_RESULT~~mapId~~playerId~~totalPnL
             rOut.writeUTF(Protocol.build(Protocol.MAP_RESULT,
-                    mapId,
-                    e.getKey(),
+                    mapId, e.getKey(),
                     String.format(Locale.US, "%.2f", e.getValue())));
             rOut.flush();
         }
@@ -691,17 +715,22 @@ public class WorkerNode {
     // WORKER_LEADERBOARD_MR~~mapId
     private void handleLeaderboard(String[] parts, ObjectOutputStream out) throws IOException {
         String mapId = parts[1];
+
+        Set<String> primarySnapshot;
+        synchronized (gamesLock) { primarySnapshot = new HashSet<>(primaryGameNames); }
+
         Map<String, Double> playerPnL = new LinkedHashMap<>();
-        synchronized (lock) {
+        synchronized (betsLock) {
             for (BetRecord bet : allBets) {
-                if (!primaryGameNames.contains(bet.getGameName())) continue;
+                if (!primarySnapshot.contains(bet.getGameName())) continue;
                 if (bet.getPlayerId().startsWith("SM")) continue; // skip stress-test bots
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
             }
         }
+
         Socket reducerSocket = new Socket();
-        reducerSocket.connect(new java.net.InetSocketAddress(reducerHost, reducerPort), 5000);
+        reducerSocket.connect(new InetSocketAddress(reducerHost, reducerPort), 5000);
         reducerSocket.setSoTimeout(5000);
         ObjectOutputStream rOut = new ObjectOutputStream(reducerSocket.getOutputStream());
         rOut.flush();
@@ -724,17 +753,22 @@ public class WorkerNode {
     private void handleLeaderboardReplica(String[] parts, ObjectOutputStream out) throws IOException {
         String mapId = parts[1];
         int deadWorkerIdx = Integer.parseInt(parts[2]);
+
+        Map<String, Integer> replicaSnapshot;
+        synchronized (gamesLock) { replicaSnapshot = new HashMap<>(replicaOwnerMap); }
+
         Map<String, Double> playerPnL = new LinkedHashMap<>();
-        synchronized (lock) {
+        synchronized (betsLock) {
             for (BetRecord bet : allBets) {
-                Integer owner = replicaOwnerMap.get(bet.getGameName());
+                Integer owner = replicaSnapshot.get(bet.getGameName());
                 if (owner == null || owner != deadWorkerIdx) continue;
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
             }
         }
+
         Socket reducerSocket = new Socket();
-        reducerSocket.connect(new java.net.InetSocketAddress(reducerHost, reducerPort), 5000);
+        reducerSocket.connect(new InetSocketAddress(reducerHost, reducerPort), 5000);
         reducerSocket.setSoTimeout(5000);
         ObjectOutputStream rOut = new ObjectOutputStream(reducerSocket.getOutputStream());
         rOut.flush();

@@ -110,16 +110,18 @@ public class DummyPlayer {
 
         List<Game> results = new ArrayList<>();
         try { //sends the search results to the master
-            Socket server = new Socket(masterHost, masterPort);
-            SecureChannel ch = SecureChannel.clientSide(server);
+            Socket             server  = new Socket(masterHost, masterPort);
+            ObjectOutputStream sOut    = new ObjectOutputStream(server.getOutputStream());
+            sOut.flush();
+            ObjectInputStream  sIn     = new ObjectInputStream(server.getInputStream());
 
-            final String request = Protocol.build(Protocol.SEARCH, minStars, betCat, risk);
-            ch.writeUTF(request);
+            sOut.writeUTF(Protocol.build(Protocol.SEARCH, minStars, betCat, risk));
+            sOut.flush();
 
             System.out.println("\n--- Search Results ---");
             String line;
             int    idx = 1;
-            while (!(line = ch.readUTF()).equals(Protocol.END)) {
+            while (!(line = sIn.readUTF()).equals(Protocol.END)) {
                 String[] p = Protocol.parse(line);
                 if (p[0].equals(Protocol.MAP_RESULT)) {
                     StringBuilder tsb = new StringBuilder();
@@ -553,15 +555,15 @@ public class DummyPlayer {
         listener.start();
     }
 
-    // single request/response to Master — traffic is AES-encrypted after DH handshake
     private String sendToMaster(String message) throws IOException {
         Socket socket = new Socket(masterHost, masterPort);
         try {
-            SecureChannel ch = SecureChannel.clientSide(socket);
-            ch.writeUTF(message);
-            return ch.readUTF();
-        } catch (Exception e) {
-            throw new IOException("Secure connection failed: " + e.getMessage(), e);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+            ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream());
+            out.writeUTF(message);
+            out.flush();
+            return in.readUTF();
         } finally {
             socket.close();
         }

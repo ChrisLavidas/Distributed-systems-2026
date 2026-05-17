@@ -9,13 +9,13 @@ import java.util.LinkedHashMap;
 public class Master {
 
     private final int           masterPort;
-    private final int           broadcastPort; //broadcast port for persistent player connections (each player can see the actions of the others live)
+    private final int           broadcastPort;
     private final String        reducerHost;
     private final int           reducerPort;
     private final List<String>  workerHosts = new ArrayList<>();
     private final List<Integer> workerPorts = new ArrayList<>();
 
-    //subscribed player output streams for jackpot broadcast, with "subscribed" we mean players connected  to the broadcast server
+    // subscribed player output streams for jackpot broadcast
     private final List<ObjectOutputStream> subscribedPlayers = new ArrayList<>();
     private final Object  subscribedLock = new Object();
 
@@ -67,6 +67,7 @@ public class Master {
             e.printStackTrace();
         }
     }
+
     private void startBroadcastServer() {
         try {
             ServerSocket bcs = new ServerSocket(broadcastPort);
@@ -79,6 +80,7 @@ public class Master {
             System.err.println("[Master] Broadcast server error: " + e.getMessage());
         }
     }
+
     class HandleBroadcastSubscriber extends Thread {
         private final Socket socket;
         HandleBroadcastSubscriber(Socket socket) { this.socket = socket; }
@@ -89,7 +91,6 @@ public class Master {
                 out.flush();
                 ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream());
 
-                //if the message is not "SUBSCRIBE", we close the socket
                 String   msg = in.readUTF();
                 String[] parts = Protocol.parse(msg);
                 if (!parts[0].equals(Protocol.SUBSCRIBE)) {
@@ -103,25 +104,17 @@ public class Master {
                     subscribedPlayers.add(out);
                 }
 
-                // Keep connection alive until player disconnects
                 try { while (in.readUTF() != null) {} }
                 catch (IOException ignored) {}
 
             } catch (IOException e) {
                 System.err.println("[Master] Subscriber disconnected: " + e.getMessage());
             } finally {
-                // player is removed from the broadcast when he disconnects
-                try {
-                    ObjectOutputStream toRemove = null;
-                    try {
-                    } catch (Exception ignored) {}
-                    socket.close();
-                } catch (IOException ignored) {}
+                try { socket.close(); } catch (IOException ignored) {}
             }
         }
     }
 
-    // broadcast any bet event to all subscribed players (for live ticker)
     public void broadcastBet(String playerId, String gameName, String bet, String result, boolean jackpot) {
         String type = jackpot ? Protocol.JACKPOT_BROADCAST : Protocol.BET_BROADCAST;
         String msg = Protocol.build(type, playerId, gameName, bet, result);
@@ -140,9 +133,11 @@ public class Master {
         if (!dead.isEmpty())
             System.out.println("[Master] Removed " + dead.size() + " disconnected subscriber(s)");
     }
+
     public void broadcastJackpot(String playerId, String gameName, String result) {
         broadcastBet(playerId, gameName, "0", result, true);
     }
+
     private int getWorkerIndex(String gameName) {
         return Math.abs(gameName.hashCode()) % workerHosts.size();
     }
@@ -160,6 +155,7 @@ public class Master {
         }
         return replicas;
     }
+
     private String sendToWorker(String host, int port, String message) throws IOException {
         Socket             worker = new Socket(host, port);
         ObjectOutputStream out    = new ObjectOutputStream(worker.getOutputStream());
@@ -182,8 +178,8 @@ public class Master {
     }
 
     private void tryRevivePrimaryFromReplica(String gameName) {
-        if (!hasReplica()) return; // No replica available
-        int primaryIdx = getWorkerIndex(gameName); //get the index of the primary worker
+        if (!hasReplica()) return;
+        int primaryIdx = getWorkerIndex(gameName);
 
         for (int repIdx : replicaIndices(gameName)) {
             try {
@@ -203,7 +199,7 @@ public class Master {
                         Protocol.build(Protocol.WORKER_ADD, ts.toString()));
                 if (addResult != null)
                     System.out.println("[Master] Revived primary worker " + primaryIdx
-                            + "for game: " + gameName + " from replica worker " + repIdx);
+                            + " for game: " + gameName + " from replica worker " + repIdx);
                 return;
             } catch (IOException e) {
                 System.err.println("[Master] Revival attempt from worker " + repIdx
@@ -212,17 +208,18 @@ public class Master {
         }
         System.err.println("[Master] Revival failed for " + gameName + " since there was no replica available");
     }
+
     private String sendWithFullFailover(String gameName, String workerCommand) throws IOException {
         String result;
         boolean primaryReachable = true;
         try {
             result = sendToWorker(workerHost(gameName), workerPort(gameName), workerCommand);
-        } catch (IOException e) { //primary worker couldn't get the command, it will be resend to the replicas
+        } catch (IOException e) {
             System.err.println("[Master] Primary down for " + gameName + ", trying replicas");
             primaryReachable = false;
             result = Protocol.build(Protocol.ERROR, "Primary unreachable");
         }
-         // if primary worker is up but has lost its data, a revival will be tried for it to retrieve its data
+
         if (primaryReachable && Protocol.parse(result)[0].equals(Protocol.ERROR) && hasReplica()) {
             System.err.println("[Master] Primary up but game " + gameName + " missing, attempting revival");
             tryRevivePrimaryFromReplica(gameName);
@@ -242,7 +239,7 @@ public class Master {
                             workerHosts.get(repIdx), workerPorts.get(repIdx), workerCommand);
                     if (Protocol.parse(repResult)[0].equals(Protocol.OK)) return repResult;
                     result = repResult;
-                } catch (IOException e) { //replica worker couldn't get the command either
+                } catch (IOException e) {
                     System.err.println("[Master] Replica worker " + repIdx
                             + " also failed for " + gameName + ": " + e.getMessage());
                 }
@@ -251,7 +248,7 @@ public class Master {
         return result;
     }
 
-    //MapReduce dispatch
+    // MapReduce dispatch
     private int dispatchStatsToWorkers(String mapId, boolean forProvider) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -307,7 +304,6 @@ public class Master {
         return expected;
     }
 
-    // dispatch leaderboard using MapReduce to all workers (player leaderboard based on their P/L)
     private int dispatchLeaderboardToWorkers(String mapId) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -355,7 +351,7 @@ public class Master {
         return expected;
     }
 
-    //function for handling requests from managers or players (clients) (each client has its own thread and the master can receive multiple requests from clients at the same time)
+    // Handles requests from managers or players — plain TCP, no encryption
     class HandleClient extends Thread {
         private final Socket socket;
 
@@ -363,38 +359,34 @@ public class Master {
 
         public void run() {
             try {
-                // DH handshake — all traffic on masterPort is encrypted.
-                SecureChannel ch;
-                try {
-                    ch = SecureChannel.serverSide(socket);
-                } catch (Exception e) {
-                    System.err.println("[Master] Handshake failed: " + e.getMessage());
-                    return;
-                }
+                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                out.flush();
+                ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream());
 
-                String   msg   = ch.readUTF();
+                String   msg   = in.readUTF();
                 String[] parts = Protocol.parse(msg);
                 String   cmd   = parts[0];
 
                 System.out.println("[Master] Received: " + cmd);
 
                 switch (cmd) {
-                    case Protocol.ADD_GAME:       handleAddGame(parts, ch);       break;
-                    case Protocol.REMOVE_GAME:    handleRemoveGame(parts, ch);    break;
-                    case Protocol.UPDATE_RISK:    handleUpdateRisk(parts, ch);    break;
-                    case Protocol.SEARCH:         handleSearch(parts, ch);        break;
-                    case Protocol.PLAY:           handlePlay(parts, ch);          break;
-                    case Protocol.ADD_BALANCE:    handleAddBalance(parts, ch);    break;
-                    case Protocol.RATE_GAME:      handleRateGame(parts, ch);      break;
-                    case Protocol.STATS_PROVIDER: handleStatsProvider(parts, ch); break;
-                    case Protocol.STATS_PLAYER:   handleStatsPlayer(parts, ch);   break;
-                    case Protocol.CHECK_GAME:     handleCheckGame(parts, ch);     break;
-                    case Protocol.CHECK_ANY_GAME: handleCheckAnyGame(ch);         break;
-                    case Protocol.LEADERBOARD:    handleLeaderboard(parts, ch);   break;
-                    case Protocol.WORKER_STATUS:  handleWorkerStatus(ch);         break;
-                    case Protocol.STRESS_TEST:    handleStressTest(parts, ch);    break;
+                    case Protocol.ADD_GAME:       handleAddGame(parts, out);       break;
+                    case Protocol.REMOVE_GAME:    handleRemoveGame(parts, out);    break;
+                    case Protocol.UPDATE_RISK:    handleUpdateRisk(parts, out);    break;
+                    case Protocol.SEARCH:         handleSearch(parts, out);        break;
+                    case Protocol.PLAY:           handlePlay(parts, out);          break;
+                    case Protocol.ADD_BALANCE:    handleAddBalance(parts, out);    break;
+                    case Protocol.RATE_GAME:      handleRateGame(parts, out);      break;
+                    case Protocol.STATS_PROVIDER: handleStatsProvider(parts, out); break;
+                    case Protocol.STATS_PLAYER:   handleStatsPlayer(parts, out);   break;
+                    case Protocol.CHECK_GAME:     handleCheckGame(parts, out);     break;
+                    case Protocol.CHECK_ANY_GAME: handleCheckAnyGame(out);         break;
+                    case Protocol.LEADERBOARD:    handleLeaderboard(parts, out);   break;
+                    case Protocol.WORKER_STATUS:  handleWorkerStatus(out);         break;
+                    case Protocol.STRESS_TEST:    handleStressTest(parts, out);    break;
                     default:
-                        ch.writeUTF(Protocol.build(Protocol.ERROR, "Unknown: " + cmd));
+                        out.writeUTF(Protocol.build(Protocol.ERROR, "Unknown: " + cmd));
+                        out.flush();
                 }
             } catch (IOException e) {
                 System.err.println("[Master] Client error: " + e.getMessage());
@@ -403,8 +395,7 @@ public class Master {
             }
         }
 
-        // Handler for ADD_GAME
-        private void handleAddGame(String[] parts, SecureChannel ch) throws IOException {
+        private void handleAddGame(String[] parts, ObjectOutputStream out) throws IOException {
             StringBuilder sb = new StringBuilder();
             for (int i = 1; i < parts.length; i++) {
                 if (i > 1) sb.append(Protocol.SEP);
@@ -429,38 +420,36 @@ public class Master {
                 }
             }
 
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-
-        // Handler for CHECK_GAME
-        private void handleCheckGame(String[] parts, SecureChannel ch) throws IOException {
+        private void handleCheckGame(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName = parts[1];
             String result = sendWithFullFailover(gameName, Protocol.build(Protocol.WORKER_CHECK, gameName));
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-        // Handler for CHECK_ANY_GAME
-        // Returns OK if at least one of the workers has a game saved, error if none do
-        private void handleCheckAnyGame(SecureChannel ch) throws IOException {
+        private void handleCheckAnyGame(ObjectOutputStream out) throws IOException {
             for (int i = 0; i < workerHosts.size(); i++) {
                 try {
                     String result = sendToWorker(workerHosts.get(i), workerPorts.get(i),
                             Protocol.build(Protocol.WORKER_CHECK_ANY));
                     if (Protocol.parse(result)[0].equals(Protocol.OK)) {
-                        ch.writeUTF(Protocol.build(Protocol.OK, "Games exist"));
+                        out.writeUTF(Protocol.build(Protocol.OK, "Games exist"));
+                        out.flush();
                         return;
                     }
                 } catch (IOException e) {
                     System.err.println("[Master] Worker check-any error: " + e.getMessage());
                 }
             }
-            ch.writeUTF(Protocol.build(Protocol.ERROR, "No active games in the system"));
+            out.writeUTF(Protocol.build(Protocol.ERROR, "No active games in the system"));
+            out.flush();
         }
 
-
-        // Handler for REMOVE_GAME
-        private void handleRemoveGame(String[] parts, SecureChannel ch) throws IOException {
+        private void handleRemoveGame(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName  = parts[1];
             String removeCmd = Protocol.build(Protocol.WORKER_REMOVE, gameName);
             String result    = sendWithFullFailover(gameName, removeCmd);
@@ -470,11 +459,11 @@ public class Master {
                     sendToWorkerSafe(workerHosts.get(repIdx), workerPorts.get(repIdx), removeCmd);
                 }
             }
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-        // Handler for UPDATE_RISK
-        private void handleUpdateRisk(String[] parts, SecureChannel ch) throws IOException {
+        private void handleUpdateRisk(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName  = parts[1];
             String newRisk   = parts[2];
             String updateCmd = Protocol.build(Protocol.WORKER_UPDATE_RISK, gameName, newRisk);
@@ -485,11 +474,11 @@ public class Master {
                     sendToWorkerSafe(workerHosts.get(repIdx), workerPorts.get(repIdx), updateCmd);
                 }
             }
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-        // Handler for SEARCH
-        private void handleSearch(String[] parts, SecureChannel ch) throws IOException {
+        private void handleSearch(String[] parts, ObjectOutputStream out) throws IOException {
             String minStars = parts.length > 1 ? parts[1] : "0";
             String betCat   = parts.length > 2 ? parts[2] : "ANY";
             String risk     = parts.length > 3 ? parts[3] : "ANY";
@@ -535,14 +524,15 @@ public class Master {
             }
 
             for (Game g : resultMap.values()) {
-                ch.writeUTF(Protocol.build(Protocol.MAP_RESULT, g.toTransportString()));
+                out.writeUTF(Protocol.build(Protocol.MAP_RESULT, g.toTransportString()));
+                out.flush();
             }
-            ch.writeUTF(Protocol.END);
+            out.writeUTF(Protocol.END);
+            out.flush();
             System.out.println("[Master] Search returned " + resultMap.size() + " games");
         }
 
-        // Handler for PLAY
-        private void handlePlay(String[] parts, SecureChannel ch) throws IOException {
+        private void handlePlay(String[] parts, ObjectOutputStream out) throws IOException {
             String playerId  = parts[1];
             String gameName  = parts[2];
             String betAmount = parts[3];
@@ -581,7 +571,6 @@ public class Master {
                 }
             }
 
-            // Async sync replicas + jackpot broadcast
             String[] resParts = Protocol.parse(result);
             if (resParts[0].equals(Protocol.OK)) {
                 final int    finalUsed       = usedWorkerIdx;
@@ -592,7 +581,6 @@ public class Master {
                         double betAmountVal    = Double.parseDouble(betAmount);
                         double houseEarning    = betAmountVal - playerResultVal;
 
-                        // Sync to all other replica workers
                         if (hasReplica()) {
                             String syncMsg = Protocol.build(Protocol.WORKER_SYNC_PLAY,
                                     playerId, gameName, betAmount,
@@ -604,7 +592,6 @@ public class Master {
                             }
                         }
 
-                        // Broadcast ALL bets to subscribers (for live ticker)
                         boolean isJackpot = (playerResultVal > betAmountVal * 2.0)
                                 && (playerResultVal / betAmountVal == Math.round(playerResultVal / betAmountVal));
                         broadcastBet(playerId, gameName,
@@ -618,14 +605,16 @@ public class Master {
                 }).start();
             }
 
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-        private void handleAddBalance(String[] parts, SecureChannel ch) throws IOException {
-            ch.writeUTF(Protocol.build(Protocol.OK, "Balance updated"));
+        private void handleAddBalance(String[] parts, ObjectOutputStream out) throws IOException {
+            out.writeUTF(Protocol.build(Protocol.OK, "Balance updated"));
+            out.flush();
         }
 
-        private void handleRateGame(String[] parts, SecureChannel ch) throws IOException {
+        private void handleRateGame(String[] parts, ObjectOutputStream out) throws IOException {
             String playerId = parts[1];
             String gameName = parts[2];
             String stars    = parts[3];
@@ -637,16 +626,14 @@ public class Master {
                     sendToWorkerSafe(workerHosts.get(repIdx), workerPorts.get(repIdx), rateCmd);
                 }
             }
-            ch.writeUTF(result);
+            out.writeUTF(result);
+            out.flush();
         }
 
-
-        // Handler for STATS_PROVIDER — MapReduce via the Reducer
-        private void handleStatsProvider(String[] parts, SecureChannel ch) throws IOException {
+        private void handleStatsProvider(String[] parts, ObjectOutputStream out) throws IOException {
             String mapId    = "prov-" + System.currentTimeMillis();
             int    expected = dispatchStatsToWorkers(mapId, true);
 
-            // Reducer connection stays plaintext (internal LAN).
             Socket             reducer = new Socket(reducerHost, reducerPort);
             ObjectOutputStream rOut    = new ObjectOutputStream(reducer.getOutputStream());
             rOut.flush();
@@ -682,10 +669,11 @@ public class Master {
                     sb.append("  Total: ").append(String.format("%+.2f", total)).append(" FUN\n");
                 }
             }
-            ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.flush();
         }
 
-        private void handleStatsPlayer(String[] parts, SecureChannel ch) throws IOException {
+        private void handleStatsPlayer(String[] parts, ObjectOutputStream out) throws IOException {
             String mapId    = "play-" + System.currentTimeMillis();
             int    expected = dispatchStatsToWorkers(mapId, false);
 
@@ -716,10 +704,11 @@ public class Master {
                             .append(" FUN\n");
                 }
             }
-            ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.flush();
         }
 
-        private void handleWorkerStatus(SecureChannel ch) throws IOException {
+        private void handleWorkerStatus(ObjectOutputStream out) throws IOException {
             StringBuilder sb = new StringBuilder();
             sb.append("=== WORKER STATUS ===\n");
             for (int i = 0; i < workerHosts.size(); i++) {
@@ -741,12 +730,13 @@ public class Master {
                     sb.append(String.format("Worker %-2d  ✗ OFFLINE  %s:%-5d%n", i + 1, host, port));
                 }
             }
-            ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.flush();
         }
 
-        private void handleStressTest(String[] parts, SecureChannel ch) throws IOException {
+        private void handleStressTest(String[] parts, ObjectOutputStream out) throws IOException {
             int n = (parts.length > 1) ? Integer.parseInt(parts[1]) : 50;
-            // Worker connections inside stress test are plaintext (internal).
+
             java.util.List<shared.Game> activeGames = new java.util.ArrayList<>();
             for (int i = 0; i < workerHosts.size(); i++) {
                 try {
@@ -770,7 +760,8 @@ public class Master {
             }
 
             if (activeGames.isEmpty()) {
-                ch.writeUTF(Protocol.build(Protocol.ERROR, "No active games found. Add games first."));
+                out.writeUTF(Protocol.build(Protocol.ERROR, "No active games found. Add games first."));
+                out.flush();
                 return;
             }
 
@@ -789,18 +780,19 @@ public class Master {
 
                 Thread t = new Thread(() -> {
                     try {
-                        // Route through the Master's own handlePlay (loopback socket) so that:
-                        // 1. Replica SYNC_PLAY fires and all Workers stay in sync
-                        // 2. broadcastBet fires for the live ticker
-                        // 3. Stats appear on all Workers, not just the primary
+                        // Route through Master's own handlePlay (loopback) so replica sync and
+                        // broadcast fire correctly — plain TCP, no encryption
                         Socket loopback = new Socket("localhost", masterPort);
                         String response;
                         try {
-                            SecureChannel loopCh = SecureChannel.clientSide(loopback);
-                            loopCh.writeUTF(Protocol.build(Protocol.PLAY, simPlayer,
+                            ObjectOutputStream loopOut = new ObjectOutputStream(loopback.getOutputStream());
+                            loopOut.flush();
+                            ObjectInputStream  loopIn  = new ObjectInputStream(loopback.getInputStream());
+                            loopOut.writeUTF(Protocol.build(Protocol.PLAY, simPlayer,
                                     game.getGameName(),
                                     String.format(java.util.Locale.US, "%.2f", bet)));
-                            response = loopCh.readUTF();
+                            loopOut.flush();
+                            response = loopIn.readUTF();
                         } finally {
                             loopback.close();
                         }
@@ -840,10 +832,11 @@ public class Master {
                     elapsed / 1000.0, wins[0], losses[0]));
             for (String r : results) sb.append(r).append("\n");
 
-            ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.flush();
         }
 
-        private void handleLeaderboard(String[] parts, SecureChannel ch) throws IOException {
+        private void handleLeaderboard(String[] parts, ObjectOutputStream out) throws IOException {
             String mapId    = "lead-" + System.currentTimeMillis();
             int    expected = dispatchLeaderboardToWorkers(mapId);
 
@@ -864,7 +857,6 @@ public class Master {
             }
             reducer.close();
 
-            // Sort by P/L descending
             List<Map.Entry<String, Double>> sorted = new ArrayList<>(byPlayer.entrySet());
             sorted.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 
@@ -879,7 +871,8 @@ public class Master {
                             rank++, e.getKey(), e.getValue()));
                 }
             }
-            ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
+            out.flush();
         }
     }
 

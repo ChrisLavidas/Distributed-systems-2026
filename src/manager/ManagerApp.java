@@ -346,11 +346,12 @@ public class ManagerApp {
     private String sendToMaster(String message) throws IOException {
         Socket socket = new Socket(masterHost, masterPort);
         try {
-            SecureChannel ch = SecureChannel.clientSide(socket);
-            ch.writeUTF(message);
-            return ch.readUTF();
-        } catch (Exception e) {
-            throw new IOException("Secure connection failed: " + e.getMessage(), e);
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+            ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream());
+            out.writeUTF(message);
+            out.flush();
+            return in.readUTF();
         } finally {
             socket.close();
         }
