@@ -80,14 +80,16 @@ public class MasterClient {
                 Socket s = null;
                 try {
                     s = openSocket();
-                    SecureChannel ch = SecureChannel.clientSide(s);
+                    ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                    out.flush();
+                    ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
 
-                    String request = Protocol.build(Protocol.SEARCH, minStars, betCat, risk);
-                    ch.writeUTF(request);
+                    out.writeUTF(Protocol.build(Protocol.SEARCH, minStars, betCat, risk));
+                    out.flush();
 
                     final List<Game> results = new ArrayList<>();
                     String line;
-                    while (!(line = ch.readUTF()).equals(Protocol.END)) {
+                    while (!(line = in.readUTF()).equals(Protocol.END)) {
                         String[] p = Protocol.parse(line);
                         if (Protocol.MAP_RESULT.equals(p[0])) {
                             StringBuilder tsb = new StringBuilder();
@@ -259,11 +261,14 @@ public class MasterClient {
                 Socket s = null;
                 try {
                     s = openSocket();
-                    SecureChannel ch = SecureChannel.clientSide(s);
+                    ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+                    out.flush();
+                    ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
 
-                    ch.writeUTF(message);
+                    out.writeUTF(message);
+                    out.flush();
 
-                    final String raw = ch.readUTF();
+                    final String raw = in.readUTF();
                     String[] p = Protocol.parse(raw);
                     final boolean ok = Protocol.OK.equals(p[0]);
                     final String payload = (p.length > 1) ? p[1] : "";
