@@ -695,6 +695,7 @@ public class WorkerNode {
         synchronized (lock) {
             for (BetRecord bet : allBets) {
                 if (!primaryGameNames.contains(bet.getGameName())) continue;
+                if (bet.getPlayerId().startsWith("SM")) continue; // skip stress-test bots
                 playerPnL.merge(bet.getPlayerId(),
                         bet.getPlayerResult() - bet.getBetAmount(), Double::sum);
             }
