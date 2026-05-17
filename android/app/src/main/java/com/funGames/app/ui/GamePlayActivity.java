@@ -187,7 +187,7 @@ public class GamePlayActivity extends AppCompatActivity {
         }
     }
 
-    // ── bind ──────────────────────────────────────────────────────────
+    // Id  binding
     private void bindViews() {
         tvGameTitle    = findViewById(R.id.tvGameTitle);
         tvRiskBadge    = findViewById(R.id.tvRiskBadge);
@@ -224,7 +224,7 @@ public class GamePlayActivity extends AppCompatActivity {
         tvBetRange.setText(String.format(Locale.US, "%.2f – %.2f FUN", game.getMinBet(), game.getMaxBet()));
     }
 
-    // ── game view ─────────────────────────────────────────────────────
+    // Game view
     private void buildGameView() {
         String name = game.getGameName() == null ? "" : game.getGameName().toLowerCase(Locale.US);
         if (name.contains("wheel")) {
@@ -274,7 +274,7 @@ public class GamePlayActivity extends AppCompatActivity {
         }
     }
 
-    // ── buttons ───────────────────────────────────────────────────────
+    // Buttons
     private void setupButtons() {
         btnBack.setOnClickListener(v -> finish());
         btnSpin.setOnClickListener(v -> { SoundManager.get().playClick(); attemptPlay(); });
@@ -331,7 +331,7 @@ public class GamePlayActivity extends AppCompatActivity {
         catch (Exception e) { return 0; }
     }
 
-    // ── connection check ──────────────────────────────────────────────
+    // Connection check
     private void checkConnection() {
         if (connStatus == null) return;
         connStatus.setConnecting();
@@ -344,14 +344,14 @@ public class GamePlayActivity extends AppCompatActivity {
         });
     }
 
-    // ── balance ───────────────────────────────────────────────────────
+    // Balance
     private void refreshBalance(boolean animate) {
         if (tvBalance == null) return;
         if (animate) tvBalance.animateTo(session.getBalance());
         else         tvBalance.setValueImmediate(session.getBalance());
     }
 
-    // ── play flow ─────────────────────────────────────────────────────
+    // Play flow
     private void attemptPlay() {
         if (spinning) return;
 

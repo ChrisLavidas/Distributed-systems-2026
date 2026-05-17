@@ -7,7 +7,6 @@ import java.util.List;
 /**
  * In-memory holder to pass the last SEARCH result list and the filter
  * summary between MainActivity (filters) and ResultsActivity (game list).
- * Keeps things simple — no Parcelable threading.
  */
 public class SearchResults {
     private static final SearchResults INSTANCE = new SearchResults();

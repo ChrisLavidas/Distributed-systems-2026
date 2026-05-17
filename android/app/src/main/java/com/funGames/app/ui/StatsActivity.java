@@ -129,7 +129,7 @@ public class StatsActivity extends AppCompatActivity {
             float pad = W * 0.05f;
             float y = H * 0.12f;
 
-            // ── Title ────────────────────────────────────────────
+            // Title
             titleP.setTextSize(W * 0.062f);
             c.drawText("MY STATS", W / 2f, y, titleP);
             y += H * 0.015f;
@@ -138,7 +138,7 @@ public class StatsActivity extends AppCompatActivity {
             c.drawLine(pad * 3, y, W - pad * 3, y, divP);
             y += H * 0.025f;
 
-            // ── Player info ──────────────────────────────────────
+            // Player info
             PlayerProfile pp = null;
             try { pp = PlayerProfile.get(getContext()); } catch (Exception ignored) {}
 
@@ -176,7 +176,7 @@ public class StatsActivity extends AppCompatActivity {
                 labelP.setTextAlign(Paint.Align.LEFT);
                 y += H * 0.032f;
 
-                // ── 4 stat cards ─────────────────────────────────
+                // 4 stat cards
                 float cardW = (W - pad * 3f) / 2f;
                 float cardH = H * 0.085f;
 
@@ -197,7 +197,7 @@ public class StatsActivity extends AppCompatActivity {
                 y += cardH + pad;
             }
 
-            // ── Bar chart (last bets) ─────────────────────────────
+            // Bar chart (last bets)
             List<BetHistory.Entry> hist = BetHistory.get().getAll();
             if (!hist.isEmpty()) {
                 // Section title

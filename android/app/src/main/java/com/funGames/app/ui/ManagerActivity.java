@@ -236,7 +236,7 @@ public class ManagerActivity extends AppCompatActivity {
             .show();
     }
 
-    // ── Remove game ───────────────────────────────────────────────────
+    // Remove game
     private void openRemoveGameDialog() {
         EditText input = new EditText(this);
         input.setHint(R.string.hint_game_name);
@@ -260,7 +260,7 @@ public class ManagerActivity extends AppCompatActivity {
             .show();
     }
 
-    // ── Change risk — visual selector ─────────────────────────────────
+    // Change risk — visual selector
     private void openChangeRiskDialog() {
         final Dialog d = new Dialog(this);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -302,7 +302,7 @@ public class ManagerActivity extends AppCompatActivity {
         d.show();
     }
 
-    // ── Provider stats + chart ────────────────────────────────────────
+    // Provider stats + chart
     private void runProviderStats() {
         tvOutputProvider.setText(R.string.msg_running);
         if (chartProvider!=null) chartProvider.setVisibility(View.GONE);
@@ -320,7 +320,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Player stats + leaderboard ────────────────────────────────────
+    // Player stats + leaderboard
     private void runPlayerStats() {
         tvOutputPlayer.setText(R.string.msg_running);
         if (chartPlayer!=null) chartPlayer.setVisibility(View.GONE);
@@ -338,7 +338,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Leaderboard ───────────────────────────────────────────────────
+    // Leaderboard
     private void runLeaderboard() {
         if (tvOutputLeaderboard != null) tvOutputLeaderboard.setText("Running...");
         client.leaderboardAsync((ok, payload) -> {
@@ -351,7 +351,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Worker Status ─────────────────────────────────────────────────
+    // Worker Status
     private void runWorkerStatus() {
         if (tvOutputWorkerStatus != null) tvOutputWorkerStatus.setText("Checking workers...");
         client.workerStatusAsync((ok, payload) -> {
@@ -360,7 +360,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Stress Test ───────────────────────────────────────────────────
+    // Stress Test
     private void runStressTest() {
         if (tvOutputStressTest != null) tvOutputStressTest.setText("Running 50 concurrent bets...");
         client.stressTestAsync(50, (ok, payload) -> {
@@ -369,7 +369,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Copy to clipboard ─────────────────────────────────────────────
+    // Copy to clipboard
     private void copyToClipboard(String label, String text) {
         ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm != null) {
@@ -378,7 +378,7 @@ public class ManagerActivity extends AppCompatActivity {
         }
     }
 
-    // ── Connection status ─────────────────────────────────────────────
+    // Connection status
     private void checkConnection() {
         ConnectionStatusView csv = findViewById(R.id.connStatusMgr);
         if (csv==null) return;
@@ -391,7 +391,7 @@ public class ManagerActivity extends AppCompatActivity {
         });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
+    // Helpers
     private void setLoading(boolean on) { progress.setVisibility(on?View.VISIBLE:View.GONE); }
 
     private void showResult(String msg) {

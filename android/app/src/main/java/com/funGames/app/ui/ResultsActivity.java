@@ -87,9 +87,8 @@ public class ResultsActivity extends AppCompatActivity
         tvBalanceTop.setText(String.format(Locale.US, "%.2f", session.getBalance()));
     }
 
-    // ======================================================
+
     // Row actions
-    // ======================================================
     @Override
     public void onPlay(Game game) {
         GamePlayActivity.launch(this, game.toTransportString());
@@ -98,9 +97,7 @@ public class ResultsActivity extends AppCompatActivity
     @Override
     public void onRate(Game game) { openRateDialog(game); }
 
-    // ======================================================
     // Play dialog — mirrors MainActivity's logic
-    // ======================================================
     private void openPlayDialog(final Game game) {
         final Dialog d = new Dialog(this);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -184,9 +181,7 @@ public class ResultsActivity extends AppCompatActivity
                 .show();
     }
 
-    // ======================================================
     // Rate dialog — mirrors MainActivity's logic
-    // ======================================================
     private void openRateDialog(final Game game) {
         final Dialog d = new Dialog(this);
         d.requestWindowFeature(Window.FEATURE_NO_TITLE);

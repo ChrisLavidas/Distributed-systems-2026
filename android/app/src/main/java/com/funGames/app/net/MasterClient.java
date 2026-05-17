@@ -20,19 +20,18 @@ import java.util.List;
  *
  * All network work happens on a background Thread and results are posted
  * back to the Android main (UI) thread via a Handler. The UI stays
- * interactive while the request is in flight, which is the requirement
- * from the assignment brief for the Android frontend.
+ * interactive while the request is in flight
  */
 public class MasterClient {
 
-    /** Callback for one-shot request/response calls (PLAY, ADD_BALANCE, RATE_GAME). */
+    //Callback for one-shot request/response calls (PLAY, ADD_BALANCE, RATE_GAME)
     public interface ResponseCallback {
         /** @param ok     true if the Master replied with OK, false for ERROR / exception
          *  @param payload the part after OK/ERROR (e.g. playerResult or error message) */
         void onResult(boolean ok, String payload);
     }
 
-    /** Callback for SEARCH which streams multiple MAP_RESULT rows ending with END. */
+    //Callback for SEARCH which streams multiple MAP_RESULT rows ending with END
     public interface SearchCallback {
         void onSearchResult(List<Game> games);
         void onSearchError(String message);
@@ -47,12 +46,12 @@ public class MasterClient {
     private final int     broadcastPort; // NEW
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    /** Callback for broadcast notifications (jackpots and regular bets). */
+    // Callback for broadcast notifications (jackpots and regular bets)
     public interface JackpotCallback {
         void onJackpot(String winnerId, String gameName, String amount);
     }
 
-    /** Callback for all bet broadcasts (for live ticker). */
+    // Callback for all bet broadcasts (for live ticker)
     public interface BetBroadcastCallback {
         void onBet(String playerId, String gameName, String bet, String result, boolean jackpot);
     }
@@ -68,9 +67,7 @@ public class MasterClient {
         this(masterHost, masterPort, masterPort + 1);
     }
 
-    // ---------------------------------------------------------------------
     // SEARCH — streamed response: many MAP_RESULT lines, terminated by END
-    // ---------------------------------------------------------------------
     public void searchAsync(final String minStars,
                             final String betCat,
                             final String risk,
@@ -120,18 +117,14 @@ public class MasterClient {
         }, "MasterClient-search").start();
     }
 
-    // ---------------------------------------------------------------------
     // PLAY — single request/response, payload = player result amount
-    // ---------------------------------------------------------------------
     public void playAsync(String playerId, String gameName, double bet,
                           ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(
                 Protocol.PLAY, playerId, gameName, String.valueOf(bet)), cb);
     }
 
-    // ---------------------------------------------------------------------
     // ADD_BALANCE — single request/response, informational
-    // ---------------------------------------------------------------------
     public void addBalanceAsync(String playerId, double amount,
                                 ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(
@@ -139,62 +132,55 @@ public class MasterClient {
     }
 
     // GET_BALANCE — fetch current balance from server
-    // ---------------------------------------------------------------------
     public void getBalanceAsync(String playerId, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.GET_BALANCE, playerId), cb);
     }
 
-    // ---------------------------------------------------------------------
     // RATE_GAME — single request/response, 1..5 stars
-    // ---------------------------------------------------------------------
     public void rateGameAsync(String playerId, String gameName, int stars,
                               ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(
                 Protocol.RATE_GAME, playerId, gameName, String.valueOf(stars)), cb);
     }
 
-    // =====================================================================
     // MANAGER OPERATIONS
-    // =====================================================================
 
-    /** Add a game given its full transport string (produced by Game.toTransportString). */
+    //Add a game given its full transport string (produced by Game.toTransportString)
     public void addGameAsync(String gameTransportString, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.ADD_GAME, gameTransportString), cb);
     }
 
-    /** Remove (deactivate) a game by name. */
+    // Remove (deactivate) a game by name
     public void removeGameAsync(String gameName, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.REMOVE_GAME, gameName), cb);
     }
 
-    /** Change the risk level of an existing game. newRisk must be "low"/"medium"/"high". */
+    // Change the risk level of an existing game. newRisk must be "low"/"medium"/"high"
     public void updateRiskAsync(String gameName, String newRisk, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.UPDATE_RISK, gameName, newRisk), cb);
     }
 
-    /** Aggregated stats by provider (MapReduce in the backend). */
+    // Aggregated stats by provider (MapReduce in the backend)
     public void statsProviderAsync(ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.STATS_PROVIDER), cb);
     }
 
-    /** Aggregated stats by player (MapReduce in the backend). */
+    // Aggregated stats by player (MapReduce in the backend)
     public void statsPlayerAsync(ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.STATS_PLAYER), cb);
     }
 
-    /** Check if any active game exists. */
+    // Check if any active game exists
     public void checkAnyGameAsync(ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.CHECK_ANY_GAME), cb);
     }
 
-    /** Check existence/status of a specific game. */
+    // Check existence/status of a specific game
     public void checkGameAsync(String gameName, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.CHECK_GAME, gameName), cb);
     }
 
-    // ---------------------------------------------------------------------
-    // NEW: Jackpot broadcast subscription
-    // ---------------------------------------------------------------------
+    // Jackpot broadcast subscription
     public void subscribeToJackpots(final String playerId,
                                     final JackpotCallback jackpotCb) {
         subscribeToAll(playerId, jackpotCb, null);
@@ -207,7 +193,7 @@ public class MasterClient {
             @Override public void run() {
                 try {
                     Socket s = new Socket();
-                    s.connect(new InetSocketAddress(masterHost, broadcastPort), CONNECT_TIMEOUT_MS);
+                    s.connect(new InetSocketAddress(masterHost, broadcastPort), CONNECT_TIMEOUT_MS); //connect with master ports from the backend
                     ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                     out.flush();
                     ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
@@ -243,24 +229,22 @@ public class MasterClient {
         }, "MasterClient-broadcast").start();
     }
 
-    /** Leaderboard (all players ranked by total P/L). */
+    // Leaderboard (all players ranked by total P/L)
     public void leaderboardAsync(ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.LEADERBOARD), cb);
     }
 
-    /** Worker health status. */
+    // Worker health status
     public void workerStatusAsync(ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.WORKER_STATUS), cb);
     }
 
-    /** Stress test with N concurrent bets. */
+    // Stress test with N concurrent bets
     public void stressTestAsync(int n, ResponseCallback cb) {
         sendOneShotAsync(Protocol.build(Protocol.STRESS_TEST, String.valueOf(n)), cb);
     }
 
-    // ---------------------------------------------------------------------
-    // Internals
-    // ---------------------------------------------------------------------
+    // Internals - sending commands to master in the backend
     private void sendOneShotAsync(final String message, final ResponseCallback cb) {
         new Thread(new Runnable() {
             @Override public void run() {

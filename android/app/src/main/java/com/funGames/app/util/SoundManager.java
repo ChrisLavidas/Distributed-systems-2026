@@ -46,13 +46,13 @@ public class SoundManager {
     public void setEnabled(boolean on) { enabled = on; }
     public boolean isEnabled()         { return enabled; }
 
-    // ── UI click ────────────────────────────────────────────────────────
+    // UI click
     public void playClick() {
         if (!enabled) return;
         pool.execute(() -> playTone(new double[]{1200}, new double[]{0.04}, new double[]{0.18}, 0.25));
     }
 
-    // ── Spin start / stop ───────────────────────────────────────────────
+    // Spin start / stop
     public void playSpin() {
         if (!enabled) return;
         spinLoop = true;
@@ -74,7 +74,7 @@ public class SoundManager {
 
     public void stopSpin() { spinLoop = false; }
 
-    // ── Win chime ────────────────────────────────────────────────────────
+    // Win chime
     public void playWin() {
         if (!enabled) return;
         pool.execute(() -> {
@@ -92,7 +92,7 @@ public class SoundManager {
         });
     }
 
-    // ── Jackpot fanfare ──────────────────────────────────────────────────
+    // Jackpot fanfare
     public void playJackpot() {
         if (!enabled) return;
         pool.execute(() -> {
@@ -125,14 +125,14 @@ public class SoundManager {
         });
     }
 
-    // ── Lose sound ───────────────────────────────────────────────────────
+    // Lose sound
     public void playLose() {
         if (!enabled) return;
         pool.execute(() ->
             playTone(new double[]{300, 220}, new double[]{0.35, 0.2}, new double[]{0.18, 0.22}, 0.7));
     }
 
-    // ── Ambient casino music ─────────────────────────────────────────────
+    // Ambient casino music
     public void playAmbient() {
         if (!enabled || ambientLoop) return;
         ambientLoop = true;
@@ -164,7 +164,7 @@ public class SoundManager {
         ambientLoop = false;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
+    // Helpers
 
     /** Play a sequence of tones one after another */
     private void playTone(double[] freqs, double[] amps, double[] durations, double decay) {
@@ -219,7 +219,7 @@ public class SoundManager {
         return (short) Math.max(-32767, Math.min(32767, v));
     }
 
-    // ── Per-game sounds ──────────────────────────────────────────────
+    // Per-game sounds
 
     /** Roulette: ball bouncing around the wheel */
     public void playRouletteBall() {

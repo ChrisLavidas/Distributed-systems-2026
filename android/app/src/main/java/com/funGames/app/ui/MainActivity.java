@@ -53,7 +53,7 @@ import com.funGames.app.ui.LiveTickerView;
 public class MainActivity extends AppCompatActivity
         implements GamesAdapter.GameActionListener {
 
-    // ---- View state ----
+    // View state
     private TextView tvPlayerId, tvEmpty;
     private AnimatedBalanceTextView tvBalance;
     private SkeletonLoadingView skeletonLoader;
@@ -101,9 +101,8 @@ public class MainActivity extends AppCompatActivity
         subscribeToJackpots(); // NEW
     }
 
-    // -------------------------------------------------------------------
+
     // View wiring
-    // -------------------------------------------------------------------
     private void bindViews() {
         tvPlayerId = findViewById(R.id.tvPlayerId);
         tvBalance  = (AnimatedBalanceTextView) findViewById(R.id.tvBalance);
@@ -301,9 +300,7 @@ public class MainActivity extends AppCompatActivity
         refreshBalance();
     }
 
-    // -------------------------------------------------------------------
     // Search (async)
-    // -------------------------------------------------------------------
     private void doSearch() {
         final String minStars = selectedMinStars;
 
@@ -342,9 +339,7 @@ public class MainActivity extends AppCompatActivity
         if (btnSearch != null) btnSearch.setEnabled(!loading);
     }
 
-    // -------------------------------------------------------------------
     // Row actions — from GamesAdapter
-    // -------------------------------------------------------------------
     @Override
     public void onPlay(Game game) {
         // Launch immersive game-play screen instead of the plain dialog
@@ -356,9 +351,7 @@ public class MainActivity extends AppCompatActivity
         openRateDialog(game);
     }
 
-    // -------------------------------------------------------------------
     // Dialogs
-    // -------------------------------------------------------------------
     private void openPlayDialog(final Game game) {
         final Dialog d = new Dialog(this);
         d.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);

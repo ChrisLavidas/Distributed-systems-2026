@@ -44,12 +44,12 @@ public class Game implements Serializable {
         this.hashKey      = hashKey;
         this.active       = active;
 
-        // betCategory — same rules as backend
+        // betCategory
         if      (minBet <= 0.1) this.betCategory = "$";
         else if (minBet <= 1.0) this.betCategory = "$$";
         else                    this.betCategory = "$$$";
 
-        // jackpot — same rules as backend
+        // jackpot
         switch (riskLevel == null ? "low" : riskLevel.toLowerCase()) {
             case "medium": this.jackpot = MEDIUM_JACKPOT; break;
             case "high":   this.jackpot = HIGH_JACKPOT;   break;
