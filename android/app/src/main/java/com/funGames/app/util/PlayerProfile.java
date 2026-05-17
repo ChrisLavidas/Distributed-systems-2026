@@ -42,7 +42,7 @@ public class PlayerProfile {
     };
 
     private SharedPreferences prefs;
-    private int xp=0, level=0, jackpots=0, totalBets=0;
+    private int xp=0, level=0, jackpots=0, totalBets=0, wins=0;
     private double bestWin=0, biggestBet=0, totalWon=0, totalLost=0;
     private String favGame="";
 
@@ -64,6 +64,7 @@ public class PlayerProfile {
         level       = prefs.getInt("level",0);
         jackpots    = prefs.getInt("jackpots",0);
         totalBets   = prefs.getInt("total_bets",0);
+        wins        = prefs.getInt("wins",0);
         bestWin     = Double.longBitsToDouble(prefs.getLong("best_win",0));
         biggestBet  = Double.longBitsToDouble(prefs.getLong("biggest_bet",0));
         totalWon    = Double.longBitsToDouble(prefs.getLong("total_won",0));
@@ -78,7 +79,7 @@ public class PlayerProfile {
         totalBets++;
         boolean win = result >= bet && result > 0;
         double net = result - bet;
-        if (win)  { totalWon  += net; if (net > bestWin)   bestWin  = net; }
+        if (win)  { wins++; totalWon  += net; if (net > bestWin) bestWin = net; }
         else       { totalLost += Math.abs(net); }
         if (bet > biggestBet) biggestBet = bet;
         if (jackpot) jackpots++;
@@ -120,7 +121,21 @@ public class PlayerProfile {
     public double getTotalWon()   { return totalWon; }
     public double getTotalLost()  { return totalLost; }
     public int    getTotalBets()  { return totalBets; }
+    public int    getWins()       { return wins; }
     public String getFavGame()    { return favGame; }
+
+    public double getWinRate() {
+        return totalBets == 0 ? 0.0 : (double) wins / totalBets * 100.0;
+    }
+
+    public void reset(Context ctx, String playerId) {
+        String key = PREF_PREFIX + (playerId.isEmpty() ? "default" : playerId);
+        ctx.getApplicationContext().getSharedPreferences(key, Context.MODE_PRIVATE)
+           .edit().clear().apply();
+        xp=0; level=0; jackpots=0; totalBets=0; wins=0;
+        bestWin=0; biggestBet=0; totalWon=0; totalLost=0; favGame="—";
+        INSTANCE = null;
+    }
 
     public boolean hasAchievement(String id) {
         return prefs != null && prefs.getBoolean("ach_"+id, false);
@@ -133,6 +148,7 @@ public class PlayerProfile {
         prefs.edit()
             .putInt("xp",xp).putInt("level",level)
             .putInt("jackpots",jackpots).putInt("total_bets",totalBets)
+            .putInt("wins",wins)
             .putLong("best_win", Double.doubleToLongBits(bestWin))
             .putLong("biggest_bet", Double.doubleToLongBits(biggestBet))
             .putLong("total_won", Double.doubleToLongBits(totalWon))

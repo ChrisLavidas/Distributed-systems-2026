@@ -63,11 +63,8 @@ public class LoginActivity extends AppCompatActivity {
         if (!SessionPrefs.hasSaved(this)) return;
         etMasterHost.setText(SessionPrefs.getHost(this));
         etMasterPort.setText(String.valueOf(SessionPrefs.getPort(this)));
-        String saved = SessionPrefs.getUserId(this);
-        if (!saved.isEmpty()) etUserId.setText(saved);
         String role = SessionPrefs.getRole(this);
         if ("MANAGER".equals(role)) setRole(Role.MANAGER);
-        // balance is fetched from server on login — not loaded from local storage
     }
 
     private void setRole(Role r) {
@@ -120,6 +117,7 @@ public class LoginActivity extends AppCompatActivity {
 
         if (selectedRole == Role.PLAYER) {
             btnLogin.setEnabled(false);
+            com.funGames.app.util.PlayerProfile.get(this).reset(this, userId);
             MasterClient tempClient = new MasterClient(host, port, port + 10);
             tempClient.getBalanceAsync(userId, (ok, payload) -> {
                 double balance = 0.0;

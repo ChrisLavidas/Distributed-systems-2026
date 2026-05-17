@@ -184,7 +184,7 @@ public class StatsActivity extends AppCompatActivity {
                 drawStatCard(c, pad, y, cardW, cardH, "TOTAL BETS",
                         String.valueOf(pp.getTotalBets()), 0xFFFFF8E7);
                 drawStatCard(c, pad * 2f + cardW, y, cardW, cardH, "WIN RATE",
-                        String.format(Locale.US, "%.1f%%", BetHistory.get().getWinRate()), 0xFF34D399);
+                        String.format(Locale.US, "%.1f%%", pp.getWinRate()), 0xFF34D399);
                 y += cardH + pad * 0.8f;
 
                 // Row 2
