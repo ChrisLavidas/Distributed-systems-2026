@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
 
 import com.funGames.app.R;
+import com.funGames.app.net.MasterClient;
 import com.funGames.app.util.Session;
 import com.funGames.app.util.Validators;
 import com.funGames.app.util.SessionPrefs;
@@ -66,8 +67,7 @@ public class LoginActivity extends AppCompatActivity {
         if (!saved.isEmpty()) etUserId.setText(saved);
         String role = SessionPrefs.getRole(this);
         if ("MANAGER".equals(role)) setRole(Role.MANAGER);
-        double savedBalance = SessionPrefs.getBalance(this);
-        if (savedBalance >= 0 && "PLAYER".equals(role)) etBalance.setText(String.valueOf((long) savedBalance));
+        // balance is fetched from server on login — not loaded from local storage
     }
 
     private void setRole(Role r) {
@@ -119,16 +119,24 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         if (selectedRole == Role.PLAYER) {
-            double balance = SessionPrefs.getPlayerBalance(this, userId);
-            Session.get().initPlayer(userId, balance, host, port, port + 10);
-            SessionPrefs.save(this, userId, "PLAYER", host, port, balance);
-            startActivity(new Intent(this, MainActivity.class));
+            btnLogin.setEnabled(false);
+            MasterClient tempClient = new MasterClient(host, port, port + 10);
+            tempClient.getBalanceAsync(userId, (ok, payload) -> {
+                double balance = 0.0;
+                if (ok) {
+                    try { balance = Double.parseDouble(payload); } catch (NumberFormatException ignored) {}
+                }
+                Session.get().initPlayer(userId, balance, host, port, port + 10);
+                SessionPrefs.save(this, userId, "PLAYER", host, port);
+                startActivity(new Intent(this, MainActivity.class));
+                finish();
+            });
         } else {
             Session.get().initManager(userId, host, port);
-            SessionPrefs.save(this, userId, "MANAGER", host, port, 0);
+            SessionPrefs.save(this, userId, "MANAGER", host, port);
             startActivity(new Intent(this, ManagerActivity.class));
+            finish();
         }
-        finish();
     }
 
     private void toast(String s) {

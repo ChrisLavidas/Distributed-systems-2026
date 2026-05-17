@@ -7,6 +7,7 @@ public class Protocol {
     public static final String SEARCH      = "SEARCH";
     public static final String PLAY        = "PLAY";
     public static final String ADD_BALANCE = "ADD_BALANCE";
+    public static final String GET_BALANCE = "GET_BALANCE";
     public static final String RATE_GAME   = "RATE_GAME";
     public static final String SUBSCRIBE   = "SUBSCRIBE";
 

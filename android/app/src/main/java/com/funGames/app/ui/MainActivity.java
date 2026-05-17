@@ -235,10 +235,6 @@ public class MainActivity extends AppCompatActivity
     private void claimDailyBonus() {
         DailyBonus.claim(this);
         session.addToBalance(DailyBonus.AMOUNT);
-        SessionPrefs.save(this, session.getUserId(), "PLAYER",
-                session.getMasterHost(), session.getMasterPort(),
-                session.getBalance());
-        SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
         refreshBalance();
         if (dailyBonusBanner != null) dailyBonusBanner.setVisibility(View.GONE);
         // Notify server
@@ -416,10 +412,6 @@ public class MainActivity extends AppCompatActivity
                             catch (NumberFormatException e) { result = 0.0; }
                             // Update balance: subtract bet, add back result
                             session.addToBalance(-betAmount + result);
-                            SessionPrefs.save(this, session.getUserId(), "PLAYER",
-                                    session.getMasterHost(), session.getMasterPort(),
-                                    session.getBalance());
-                            SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
                             refreshBalance();
                             d.dismiss();
                             showPlayOutcome(game, betAmount, result);
@@ -570,10 +562,6 @@ public class MainActivity extends AppCompatActivity
     private void addAmount(android.app.Dialog d, Button btnAdd, double amt) {
         btnAdd.setEnabled(false);
         session.addToBalance(amt);
-        SessionPrefs.save(this, session.getUserId(), "PLAYER",
-                session.getMasterHost(), session.getMasterPort(),
-                session.getBalance());
-        SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
         refreshBalance();
         session.getClient().addBalanceAsync(session.getPlayerId(), amt,
                 (ok, payload) -> runOnUiThread(() -> {

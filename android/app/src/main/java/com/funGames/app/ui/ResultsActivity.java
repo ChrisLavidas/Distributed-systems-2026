@@ -145,7 +145,6 @@ public class ResultsActivity extends AppCompatActivity
                             try { result = Double.parseDouble(payload.replace(',', '.')); }
                             catch (NumberFormatException e) { result = 0.0; }
                             session.addToBalance(-betAmount + result);
-                            com.funGames.app.util.SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
                             refreshBalance();
                             d.dismiss();
                             showPlayOutcome(game, betAmount, result);

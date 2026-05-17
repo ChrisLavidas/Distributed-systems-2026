@@ -19,6 +19,10 @@ public class Master {
     private final List<ObjectOutputStream> subscribedPlayers = new ArrayList<>();
     private final Object  subscribedLock = new Object();
 
+    // Server-side player balance ledger
+    private final Map<String, Double> playerBalances = new HashMap<>();
+    private final Object balanceLock = new Object();
+
     public Master(int masterPort, int broadcastPort, String reducerHost, int reducerPort,
                   List<String> wHosts, List<Integer> wPorts) {
         this.masterPort    = masterPort;
@@ -382,6 +386,7 @@ public class Master {
                     case Protocol.SEARCH:         handleSearch(parts, out);        break;
                     case Protocol.PLAY:           handlePlay(parts, out);          break;
                     case Protocol.ADD_BALANCE:    handleAddBalance(parts, out);    break;
+                    case Protocol.GET_BALANCE:    handleGetBalance(parts, out);    break;
                     case Protocol.RATE_GAME:      handleRateGame(parts, out);      break;
                     case Protocol.STATS_PROVIDER: handleStatsProvider(parts, out); break;
                     case Protocol.STATS_PLAYER:   handleStatsPlayer(parts, out);   break;
@@ -587,8 +592,16 @@ public class Master {
 
             String[] resParts = Protocol.parse(result);
             if (resParts[0].equals(Protocol.OK)) {
-                final int    finalUsed       = usedWorkerIdx;
                 final String playerResultStr = resParts[1];
+                // Update server-side balance: deduct bet, add winnings
+                try {
+                    double bet    = Double.parseDouble(betAmount);
+                    double winnings = Double.parseDouble(playerResultStr);
+                    synchronized (balanceLock) {
+                        playerBalances.merge(playerId, winnings - bet, Double::sum);
+                    }
+                } catch (NumberFormatException ignored) {}
+                final int finalUsed = usedWorkerIdx;
                 // Async sync replicas + jackpot broadcast
                 new Thread(() -> {
                     try {
@@ -627,7 +640,22 @@ public class Master {
         }
 
         private void handleAddBalance(String[] parts, ObjectOutputStream out) throws IOException {
+            String playerId = parts[1];
+            double amount   = Double.parseDouble(parts[2]);
+            synchronized (balanceLock) {
+                playerBalances.merge(playerId, amount, Double::sum);
+            }
             out.writeUTF(Protocol.build(Protocol.OK, "Balance updated"));
+            out.flush();
+        }
+
+        private void handleGetBalance(String[] parts, ObjectOutputStream out) throws IOException {
+            String playerId = parts[1];
+            double balance;
+            synchronized (balanceLock) {
+                balance = playerBalances.getOrDefault(playerId, 0.0);
+            }
+            out.writeUTF(Protocol.build(Protocol.OK, String.valueOf(balance)));
             out.flush();
         }
 

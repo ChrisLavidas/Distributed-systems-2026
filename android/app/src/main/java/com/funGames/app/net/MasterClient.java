@@ -138,6 +138,12 @@ public class MasterClient {
                 Protocol.ADD_BALANCE, playerId, String.valueOf(amount)), cb);
     }
 
+    // GET_BALANCE — fetch current balance from server
+    // ---------------------------------------------------------------------
+    public void getBalanceAsync(String playerId, ResponseCallback cb) {
+        sendOneShotAsync(Protocol.build(Protocol.GET_BALANCE, playerId), cb);
+    }
+
     // ---------------------------------------------------------------------
     // RATE_GAME — single request/response, 1..5 stars
     // ---------------------------------------------------------------------

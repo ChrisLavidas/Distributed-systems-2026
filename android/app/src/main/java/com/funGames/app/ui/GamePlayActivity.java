@@ -412,12 +412,6 @@ public class GamePlayActivity extends AppCompatActivity {
 
                     if (ok) {
                         session.addToBalance(-betAmount + finalResult);
-                        com.funGames.app.util.SessionPrefs.save(getApplicationContext(),
-                                session.getUserId(), "PLAYER",
-                                session.getMasterHost(), session.getMasterPort(),
-                                session.getBalance());
-                        com.funGames.app.util.SessionPrefs.savePlayerBalance(getApplicationContext(),
-                                session.getUserId(), session.getBalance());
                         BetHistory.get().add(game.getGameName(), betAmount, finalResult);
                         refreshBalance(true);
                         deliverResult(finalResult, betAmount);
