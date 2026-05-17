@@ -66,6 +66,8 @@ public class LoginActivity extends AppCompatActivity {
         if (!saved.isEmpty()) etUserId.setText(saved);
         String role = SessionPrefs.getRole(this);
         if ("MANAGER".equals(role)) setRole(Role.MANAGER);
+        double savedBalance = SessionPrefs.getBalance(this);
+        if (savedBalance > 0) etBalance.setText(String.valueOf((long) savedBalance));
     }
 
     private void setRole(Role r) {
