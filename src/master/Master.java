@@ -9,15 +9,15 @@ import java.util.LinkedHashMap;
 public class Master {
 
     private final int           masterPort;
-    private final int           broadcastPort;   // NEW: separate port for persistent player connections
+    private final int           broadcastPort; //broadcast port for persistent player connections (each player can see the actions of the others live)
     private final String        reducerHost;
     private final int           reducerPort;
     private final List<String>  workerHosts = new ArrayList<>();
     private final List<Integer> workerPorts = new ArrayList<>();
 
-    // NEW: list of subscribed player output streams for jackpot broadcast
+    //subscribed player output streams for jackpot broadcast, with "subscribed" we mean players connected  to the broadcast server
     private final List<ObjectOutputStream> subscribedPlayers = new ArrayList<>();
-    private final Object                   subscribedLock    = new Object();
+    private final Object  subscribedLock = new Object();
 
     public Master(int masterPort, int broadcastPort, String reducerHost, int reducerPort,
                   List<String> wHosts, List<Integer> wPorts) {
@@ -31,11 +31,11 @@ public class Master {
 
     public static void main(String[] args) {
         if (args.length < 5) {
-            System.out.println("Usage: <masterPort> <broadcastPort> <reducerHost> <reducerPort> <wHost:wPort ...>");
+            System.out.println("Given parameters should have the following order: <masterPort> <broadcastPort> <reducerHost> <reducerPort> <wHost:wPort>");
             return;
         }
-        int    port          = Integer.parseInt(args[0]);
-        int    broadcastPort = Integer.parseInt(args[1]);
+        int port = Integer.parseInt(args[0]);
+        int broadcastPort = Integer.parseInt(args[1]);
         String reducerHost   = args[2];
         int    reducerPort   = Integer.parseInt(args[3]);
 
@@ -52,11 +52,9 @@ public class Master {
     }
 
     public void start() {
-        System.out.println("[Master] Starting request port=" + masterPort
+        System.out.println("[Master] Starting on port " + masterPort
                 + " broadcast port=" + broadcastPort
                 + " | Workers: " + workerHosts.size());
-
-        // NEW: broadcast server on a separate port for persistent player connections
         new Thread(() -> startBroadcastServer()).start();
 
         try {
@@ -69,22 +67,18 @@ public class Master {
             e.printStackTrace();
         }
     }
-
-    // NEW: Accepts persistent connections from players who want jackpot notifications
     private void startBroadcastServer() {
         try {
-            ServerSocket bss = new ServerSocket(broadcastPort);
+            ServerSocket bcs = new ServerSocket(broadcastPort);
             System.out.println("[Master] Broadcast server ready on port " + broadcastPort);
             while (true) {
-                Socket playerSock = bss.accept();
+                Socket playerSock = bcs.accept();
                 new HandleBroadcastSubscriber(playerSock).start();
             }
         } catch (IOException e) {
             System.err.println("[Master] Broadcast server error: " + e.getMessage());
         }
     }
-
-    // NEW: Keeps a player socket open and registers their output stream
     class HandleBroadcastSubscriber extends Thread {
         private final Socket socket;
         HandleBroadcastSubscriber(Socket socket) { this.socket = socket; }
@@ -95,8 +89,8 @@ public class Master {
                 out.flush();
                 ObjectInputStream  in  = new ObjectInputStream(socket.getInputStream());
 
-                // First message must be SUBSCRIBE~~playerId
-                String   msg   = in.readUTF();
+                //if the message is not "SUBSCRIBE", we close the socket
+                String   msg = in.readUTF();
                 String[] parts = Protocol.parse(msg);
                 if (!parts[0].equals(Protocol.SUBSCRIBE)) {
                     socket.close();
@@ -109,18 +103,17 @@ public class Master {
                     subscribedPlayers.add(out);
                 }
 
-                // Keep connection alive — wait until client disconnects
+                // Keep connection alive until player disconnects
                 try { while (in.readUTF() != null) {} }
                 catch (IOException ignored) {}
 
             } catch (IOException e) {
                 System.err.println("[Master] Subscriber disconnected: " + e.getMessage());
             } finally {
-                // Remove from list on disconnect
+                // player is removed from the broadcast when he disconnects
                 try {
                     ObjectOutputStream toRemove = null;
                     try {
-                        // We don't have a ref here easily, so just clean up dead streams on next broadcast
                     } catch (Exception ignored) {}
                     socket.close();
                 } catch (IOException ignored) {}
@@ -128,7 +121,7 @@ public class Master {
         }
     }
 
-    // Broadcast any bet event to all subscribed players (for live ticker)
+    // broadcast any bet event to all subscribed players (for live ticker)
     public void broadcastBet(String playerId, String gameName, String bet, String result, boolean jackpot) {
         String type = jackpot ? Protocol.JACKPOT_BROADCAST : Protocol.BET_BROADCAST;
         String msg = Protocol.build(type, playerId, gameName, bet, result);
@@ -147,14 +140,9 @@ public class Master {
         if (!dead.isEmpty())
             System.out.println("[Master] Removed " + dead.size() + " disconnected subscriber(s)");
     }
-
-    // Keep for backwards compatibility
     public void broadcastJackpot(String playerId, String gameName, String result) {
         broadcastBet(playerId, gameName, "0", result, true);
     }
-
-    // ── Routing helpers ───────────────────────────────────────────────────────
-
     private int getWorkerIndex(String gameName) {
         return Math.abs(gameName.hashCode()) % workerHosts.size();
     }
@@ -172,9 +160,6 @@ public class Master {
         }
         return replicas;
     }
-
-    // ── Network helpers ───────────────────────────────────────────────────────
-
     private String sendToWorker(String host, int port, String message) throws IOException {
         Socket             worker = new Socket(host, port);
         ObjectOutputStream out    = new ObjectOutputStream(worker.getOutputStream());
@@ -191,14 +176,14 @@ public class Master {
         try {
             return sendToWorker(host, port, message);
         } catch (IOException e) {
-            System.err.println("[Master] Worker unreachable at " + host + ":" + port + " — " + e.getMessage());
+            System.err.println("[Master] Worker unreachable at " + host + ":" + port + e.getMessage());
             return null;
         }
     }
 
-    private void tryRehydratePrimaryFromReplica(String gameName) {
-        if (!hasReplica()) return;
-        int primaryIdx = getWorkerIndex(gameName);
+    private void tryRevivePrimaryFromReplica(String gameName) {
+        if (!hasReplica()) return; // No replica available
+        int primaryIdx = getWorkerIndex(gameName); //get the index of the primary worker
 
         for (int repIdx : replicaIndices(gameName)) {
             try {
@@ -217,31 +202,30 @@ public class Master {
                         workerHosts.get(primaryIdx), workerPorts.get(primaryIdx),
                         Protocol.build(Protocol.WORKER_ADD, ts.toString()));
                 if (addResult != null)
-                    System.out.println("[Master] Re-hydrated primary (worker " + primaryIdx
-                            + ") for game: " + gameName + " from replica worker " + repIdx);
+                    System.out.println("[Master] Revived primary worker " + primaryIdx
+                            + "for game: " + gameName + " from replica worker " + repIdx);
                 return;
             } catch (IOException e) {
-                System.err.println("[Master] Re-hydration attempt from worker " + repIdx
+                System.err.println("[Master] Revival attempt from worker " + repIdx
                         + " failed for " + gameName + ": " + e.getMessage());
             }
         }
-        System.err.println("[Master] Re-hydration failed for " + gameName + " — no replica available");
+        System.err.println("[Master] Revival failed for " + gameName + " since there was no replica available");
     }
-
     private String sendWithFullFailover(String gameName, String workerCommand) throws IOException {
         String result;
         boolean primaryReachable = true;
         try {
             result = sendToWorker(workerHost(gameName), workerPort(gameName), workerCommand);
-        } catch (IOException e) {
+        } catch (IOException e) { //primary worker couldn't get the command, it will be resend to the replicas
             System.err.println("[Master] Primary down for " + gameName + ", trying replicas");
             primaryReachable = false;
             result = Protocol.build(Protocol.ERROR, "Primary unreachable");
         }
-
+         // if primary worker is up but has lost its data, a revival will be tried for it to retrieve its data
         if (primaryReachable && Protocol.parse(result)[0].equals(Protocol.ERROR) && hasReplica()) {
-            System.err.println("[Master] Primary up but game " + gameName + " missing — attempting re-hydration");
-            tryRehydratePrimaryFromReplica(gameName);
+            System.err.println("[Master] Primary up but game " + gameName + " missing, attempting revival");
+            tryRevivePrimaryFromReplica(gameName);
             try {
                 String retried = sendToWorker(workerHost(gameName), workerPort(gameName), workerCommand);
                 if (Protocol.parse(retried)[0].equals(Protocol.OK)) return retried;
@@ -258,7 +242,7 @@ public class Master {
                             workerHosts.get(repIdx), workerPorts.get(repIdx), workerCommand);
                     if (Protocol.parse(repResult)[0].equals(Protocol.OK)) return repResult;
                     result = repResult;
-                } catch (IOException e) {
+                } catch (IOException e) { //replica worker couldn't get the command either
                     System.err.println("[Master] Replica worker " + repIdx
                             + " also failed for " + gameName + ": " + e.getMessage());
                 }
@@ -267,8 +251,7 @@ public class Master {
         return result;
     }
 
-    // ── MapReduce dispatch ────────────────────────────────────────────────────
-
+    //MapReduce dispatch
     private int dispatchStatsToWorkers(String mapId, boolean forProvider) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -284,7 +267,7 @@ public class Master {
                     sendToWorker(workerHosts.get(idx), workerPorts.get(idx),
                             Protocol.build(cmd, mapId));
                 } catch (IOException e) {
-                    System.err.println("[Master] Worker " + idx + " MAP failed: " + e.getMessage());
+                    System.err.println("[Master] Worker " + idx + " map failed: " + e.getMessage());
                     failed[idx] = true;
                 }
             });
@@ -324,7 +307,7 @@ public class Master {
         return expected;
     }
 
-    // NEW: dispatch leaderboard MapReduce to all workers
+    // dispatch leaderboard using MapReduce to all workers (player leaderboard based on their P/L)
     private int dispatchLeaderboardToWorkers(String mapId) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -337,7 +320,7 @@ public class Master {
                     sendToWorker(workerHosts.get(idx), workerPorts.get(idx),
                             Protocol.build(Protocol.WORKER_LEADERBOARD_MR, mapId));
                 } catch (IOException e) {
-                    System.err.println("[Master] Worker " + idx + " LEADERBOARD MAP failed: " + e.getMessage());
+                    System.err.println("[Master] Worker " + idx + " leaderboard map failed: " + e.getMessage());
                     failed[idx] = true;
                 }
             });
@@ -372,8 +355,7 @@ public class Master {
         return expected;
     }
 
-    // ── Client handler ────────────────────────────────────────────────────────
-
+    //function for handling requests from managers or players (clients) (each client has its own thread and the master can receive multiple requests from clients at the same time)
     class HandleClient extends Thread {
         private final Socket socket;
 
@@ -421,6 +403,7 @@ public class Master {
             }
         }
 
+        // Handler for ADD_GAME
         private void handleAddGame(String[] parts, SecureChannel ch) throws IOException {
             StringBuilder sb = new StringBuilder();
             for (int i = 1; i < parts.length; i++) {
@@ -449,12 +432,16 @@ public class Master {
             ch.writeUTF(result);
         }
 
+
+        // Handler for CHECK_GAME
         private void handleCheckGame(String[] parts, SecureChannel ch) throws IOException {
             String gameName = parts[1];
             String result = sendWithFullFailover(gameName, Protocol.build(Protocol.WORKER_CHECK, gameName));
             ch.writeUTF(result);
         }
 
+        // Handler for CHECK_ANY_GAME
+        // Returns OK if at least one of the workers has a game saved, error if none do
         private void handleCheckAnyGame(SecureChannel ch) throws IOException {
             for (int i = 0; i < workerHosts.size(); i++) {
                 try {
@@ -471,6 +458,8 @@ public class Master {
             ch.writeUTF(Protocol.build(Protocol.ERROR, "No active games in the system"));
         }
 
+
+        // Handler for REMOVE_GAME
         private void handleRemoveGame(String[] parts, SecureChannel ch) throws IOException {
             String gameName  = parts[1];
             String removeCmd = Protocol.build(Protocol.WORKER_REMOVE, gameName);
@@ -484,6 +473,7 @@ public class Master {
             ch.writeUTF(result);
         }
 
+        // Handler for UPDATE_RISK
         private void handleUpdateRisk(String[] parts, SecureChannel ch) throws IOException {
             String gameName  = parts[1];
             String newRisk   = parts[2];
@@ -498,6 +488,7 @@ public class Master {
             ch.writeUTF(result);
         }
 
+        // Handler for SEARCH
         private void handleSearch(String[] parts, SecureChannel ch) throws IOException {
             String minStars = parts.length > 1 ? parts[1] : "0";
             String betCat   = parts.length > 2 ? parts[2] : "ANY";
@@ -550,6 +541,7 @@ public class Master {
             System.out.println("[Master] Search returned " + resultMap.size() + " games");
         }
 
+        // Handler for PLAY
         private void handlePlay(String[] parts, SecureChannel ch) throws IOException {
             String playerId  = parts[1];
             String gameName  = parts[2];
@@ -564,7 +556,7 @@ public class Master {
             try {
                 result = sendToWorker(workerHost(gameName), workerPort(gameName), playCmd);
                 if (!Protocol.parse(result)[0].equals(Protocol.OK) && hasReplica()) {
-                    tryRehydratePrimaryFromReplica(gameName);
+                    tryRevivePrimaryFromReplica(gameName);
                     String retried = sendToWorkerSafe(workerHost(gameName), workerPort(gameName), playCmd);
                     if (retried != null) result = retried;
                 }
@@ -648,6 +640,8 @@ public class Master {
             ch.writeUTF(result);
         }
 
+
+        // Handler for STATS_PROVIDER — MapReduce via the Reducer
         private void handleStatsProvider(String[] parts, SecureChannel ch) throws IOException {
             String mapId    = "prov-" + System.currentTimeMillis();
             int    expected = dispatchStatsToWorkers(mapId, true);
@@ -888,8 +882,6 @@ public class Master {
             ch.writeUTF(Protocol.build(Protocol.OK, sb.toString().trim()));
         }
     }
-
-    // ── Parallel search thread ────────────────────────────────────────────────
 
     class WorkerSearchThread extends Thread {
         private final int        workerIdx;
