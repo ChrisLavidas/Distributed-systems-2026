@@ -67,7 +67,7 @@ public class LoginActivity extends AppCompatActivity {
         String role = SessionPrefs.getRole(this);
         if ("MANAGER".equals(role)) setRole(Role.MANAGER);
         double savedBalance = SessionPrefs.getBalance(this);
-        if (savedBalance > 0) etBalance.setText(String.valueOf((long) savedBalance));
+        if (savedBalance >= 0 && "PLAYER".equals(role)) etBalance.setText(String.valueOf((long) savedBalance));
     }
 
     private void setRole(Role r) {
@@ -78,7 +78,7 @@ public class LoginActivity extends AppCompatActivity {
         if (r == Role.PLAYER) {
             lblUserId.setText(R.string.lbl_player_id);
             etUserId.setHint(R.string.hint_player_id);
-            balanceRow.setVisibility(View.VISIBLE);
+            balanceRow.setVisibility(View.GONE);
             btnLogin.setText(R.string.btn_login_player);
         } else {
             lblUserId.setText(R.string.lbl_manager_id);
@@ -119,11 +119,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         if (selectedRole == Role.PLAYER) {
-            Double balance = Validators.parseDecimal(etBalance.getText().toString());
-            if (balance == null || balance < 0 || balance > 1_000_000) {
-                toast(getString(R.string.err_invalid_balance));
-                return;
-            }
+            double balance = SessionPrefs.getPlayerBalance(this, userId);
             Session.get().initPlayer(userId, balance, host, port, port + 10);
             SessionPrefs.save(this, userId, "PLAYER", host, port, balance);
             startActivity(new Intent(this, MainActivity.class));

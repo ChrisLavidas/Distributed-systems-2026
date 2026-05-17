@@ -238,6 +238,7 @@ public class MainActivity extends AppCompatActivity
         SessionPrefs.save(this, session.getUserId(), "PLAYER",
                 session.getMasterHost(), session.getMasterPort(),
                 session.getBalance());
+        SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
         refreshBalance();
         if (dailyBonusBanner != null) dailyBonusBanner.setVisibility(View.GONE);
         // Notify server
@@ -418,6 +419,7 @@ public class MainActivity extends AppCompatActivity
                             SessionPrefs.save(this, session.getUserId(), "PLAYER",
                                     session.getMasterHost(), session.getMasterPort(),
                                     session.getBalance());
+                            SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
                             refreshBalance();
                             d.dismiss();
                             showPlayOutcome(game, betAmount, result);
@@ -571,6 +573,7 @@ public class MainActivity extends AppCompatActivity
         SessionPrefs.save(this, session.getUserId(), "PLAYER",
                 session.getMasterHost(), session.getMasterPort(),
                 session.getBalance());
+        SessionPrefs.savePlayerBalance(this, session.getUserId(), session.getBalance());
         refreshBalance();
         session.getClient().addBalanceAsync(session.getPlayerId(), amt,
                 (ok, payload) -> runOnUiThread(() -> {
