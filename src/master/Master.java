@@ -9,13 +9,13 @@ import java.util.LinkedHashMap;
 public class Master {
 
     private final int           masterPort;
-    private final int           broadcastPort;
+    private final int           broadcastPort; //broadcast port for persistent player connections (each player can see the actions of the others live)
     private final String        reducerHost;
     private final int           reducerPort;
     private final List<String>  workerHosts = new ArrayList<>();
     private final List<Integer> workerPorts = new ArrayList<>();
 
-    // subscribed player output streams for jackpot broadcast
+    //subscribed player output streams for jackpot broadcast, with "subscribed" we mean players connected  to the broadcast server
     private final List<ObjectOutputStream> subscribedPlayers = new ArrayList<>();
     private final Object  subscribedLock = new Object();
 
@@ -93,6 +93,7 @@ public class Master {
 
                 String   msg = in.readUTF();
                 String[] parts = Protocol.parse(msg);
+                //if the message is not "SUBSCRIBE", we close the socket
                 if (!parts[0].equals(Protocol.SUBSCRIBE)) {
                     socket.close();
                     return;
@@ -104,17 +105,20 @@ public class Master {
                     subscribedPlayers.add(out);
                 }
 
+                // Keep connection alive until player disconnects
                 try { while (in.readUTF() != null) {} }
                 catch (IOException ignored) {}
 
             } catch (IOException e) {
                 System.err.println("[Master] Subscriber disconnected: " + e.getMessage());
             } finally {
+                // player is removed from the broadcast when he disconnects
                 try { socket.close(); } catch (IOException ignored) {}
             }
         }
     }
 
+    // broadcast any bet event to all subscribed players (for live ticker)
     public void broadcastBet(String playerId, String gameName, String bet, String result, boolean jackpot) {
         String type = jackpot ? Protocol.JACKPOT_BROADCAST : Protocol.BET_BROADCAST;
         String msg = Protocol.build(type, playerId, gameName, bet, result);
@@ -178,8 +182,8 @@ public class Master {
     }
 
     private void tryRevivePrimaryFromReplica(String gameName) {
-        if (!hasReplica()) return;
-        int primaryIdx = getWorkerIndex(gameName);
+        if (!hasReplica()) return; // No replica available
+        int primaryIdx = getWorkerIndex(gameName); //get the index of the primary worker
 
         for (int repIdx : replicaIndices(gameName)) {
             try {
@@ -214,12 +218,13 @@ public class Master {
         boolean primaryReachable = true;
         try {
             result = sendToWorker(workerHost(gameName), workerPort(gameName), workerCommand);
-        } catch (IOException e) {
+        } catch (IOException e) { //primary worker couldn't get the command, it will be resend to the replicas
             System.err.println("[Master] Primary down for " + gameName + ", trying replicas");
             primaryReachable = false;
             result = Protocol.build(Protocol.ERROR, "Primary unreachable");
         }
 
+         // if primary worker is up but has lost its data, a revival will be tried for it to retrieve its data
         if (primaryReachable && Protocol.parse(result)[0].equals(Protocol.ERROR) && hasReplica()) {
             System.err.println("[Master] Primary up but game " + gameName + " missing, attempting revival");
             tryRevivePrimaryFromReplica(gameName);
@@ -239,7 +244,7 @@ public class Master {
                             workerHosts.get(repIdx), workerPorts.get(repIdx), workerCommand);
                     if (Protocol.parse(repResult)[0].equals(Protocol.OK)) return repResult;
                     result = repResult;
-                } catch (IOException e) {
+                } catch (IOException e) { //replica worker couldn't get the command either
                     System.err.println("[Master] Replica worker " + repIdx
                             + " also failed for " + gameName + ": " + e.getMessage());
                 }
@@ -248,7 +253,7 @@ public class Master {
         return result;
     }
 
-    // MapReduce dispatch
+    //MapReduce dispatch
     private int dispatchStatsToWorkers(String mapId, boolean forProvider) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -304,6 +309,7 @@ public class Master {
         return expected;
     }
 
+    // dispatch leaderboard using MapReduce to all workers (player leaderboard based on their P/L)
     private int dispatchLeaderboardToWorkers(String mapId) {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
@@ -351,7 +357,7 @@ public class Master {
         return expected;
     }
 
-    // Handles requests from managers or players — plain TCP, no encryption
+    //function for handling requests from managers or players (clients) (each client has its own thread and the master can receive multiple requests from clients at the same time)
     class HandleClient extends Thread {
         private final Socket socket;
 
@@ -395,6 +401,7 @@ public class Master {
             }
         }
 
+        // Handler for ADD_GAME
         private void handleAddGame(String[] parts, ObjectOutputStream out) throws IOException {
             StringBuilder sb = new StringBuilder();
             for (int i = 1; i < parts.length; i++) {
@@ -424,6 +431,7 @@ public class Master {
             out.flush();
         }
 
+        // Handler for CHECK_GAME
         private void handleCheckGame(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName = parts[1];
             String result = sendWithFullFailover(gameName, Protocol.build(Protocol.WORKER_CHECK, gameName));
@@ -431,6 +439,8 @@ public class Master {
             out.flush();
         }
 
+        // Handler for CHECK_ANY_GAME
+        // Returns OK if at least one of the workers has a game saved, error if none do
         private void handleCheckAnyGame(ObjectOutputStream out) throws IOException {
             for (int i = 0; i < workerHosts.size(); i++) {
                 try {
@@ -449,6 +459,7 @@ public class Master {
             out.flush();
         }
 
+        // Handler for REMOVE_GAME
         private void handleRemoveGame(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName  = parts[1];
             String removeCmd = Protocol.build(Protocol.WORKER_REMOVE, gameName);
@@ -463,6 +474,7 @@ public class Master {
             out.flush();
         }
 
+        // Handler for UPDATE_RISK
         private void handleUpdateRisk(String[] parts, ObjectOutputStream out) throws IOException {
             String gameName  = parts[1];
             String newRisk   = parts[2];
@@ -478,6 +490,7 @@ public class Master {
             out.flush();
         }
 
+        // Handler for SEARCH
         private void handleSearch(String[] parts, ObjectOutputStream out) throws IOException {
             String minStars = parts.length > 1 ? parts[1] : "0";
             String betCat   = parts.length > 2 ? parts[2] : "ANY";
@@ -532,6 +545,7 @@ public class Master {
             System.out.println("[Master] Search returned " + resultMap.size() + " games");
         }
 
+        // Handler for PLAY
         private void handlePlay(String[] parts, ObjectOutputStream out) throws IOException {
             String playerId  = parts[1];
             String gameName  = parts[2];
@@ -575,12 +589,14 @@ public class Master {
             if (resParts[0].equals(Protocol.OK)) {
                 final int    finalUsed       = usedWorkerIdx;
                 final String playerResultStr = resParts[1];
+                // Async sync replicas + jackpot broadcast
                 new Thread(() -> {
                     try {
                         double playerResultVal = Double.parseDouble(playerResultStr);
                         double betAmountVal    = Double.parseDouble(betAmount);
                         double houseEarning    = betAmountVal - playerResultVal;
 
+                        // Sync to all other replica workers
                         if (hasReplica()) {
                             String syncMsg = Protocol.build(Protocol.WORKER_SYNC_PLAY,
                                     playerId, gameName, betAmount,
@@ -594,6 +610,7 @@ public class Master {
 
                         boolean isJackpot = (playerResultVal > betAmountVal * 2.0)
                                 && (playerResultVal / betAmountVal == Math.round(playerResultVal / betAmountVal));
+                        // Broadcast ALL bets to subscribers (for live ticker)
                         broadcastBet(playerId, gameName,
                                 String.format(java.util.Locale.US, "%.2f", betAmountVal),
                                 String.format(java.util.Locale.US, "%.2f", playerResultVal),
@@ -630,10 +647,12 @@ public class Master {
             out.flush();
         }
 
+        // Handler for STATS_PROVIDER — MapReduce via the Reducer
         private void handleStatsProvider(String[] parts, ObjectOutputStream out) throws IOException {
             String mapId    = "prov-" + System.currentTimeMillis();
             int    expected = dispatchStatsToWorkers(mapId, true);
 
+            // Reducer connection stays plaintext (internal LAN).
             Socket             reducer = new Socket(reducerHost, reducerPort);
             ObjectOutputStream rOut    = new ObjectOutputStream(reducer.getOutputStream());
             rOut.flush();
@@ -737,6 +756,7 @@ public class Master {
         private void handleStressTest(String[] parts, ObjectOutputStream out) throws IOException {
             int n = (parts.length > 1) ? Integer.parseInt(parts[1]) : 50;
 
+            // Worker connections inside stress test are plaintext (internal).
             java.util.List<shared.Game> activeGames = new java.util.ArrayList<>();
             for (int i = 0; i < workerHosts.size(); i++) {
                 try {
@@ -780,8 +800,10 @@ public class Master {
 
                 Thread t = new Thread(() -> {
                     try {
-                        // Route through Master's own handlePlay (loopback) so replica sync and
-                        // broadcast fire correctly — plain TCP, no encryption
+                        // Route through the Master's own handlePlay (loopback socket) so that:
+                        // 1. Replica SYNC_PLAY fires and all Workers stay in sync
+                        // 2. broadcastBet fires for the live ticker
+                        // 3. Stats appear on all Workers, not just the primary
                         Socket loopback = new Socket("localhost", masterPort);
                         String response;
                         try {
@@ -858,6 +880,7 @@ public class Master {
             reducer.close();
 
             List<Map.Entry<String, Double>> sorted = new ArrayList<>(byPlayer.entrySet());
+            // Sort by P/L descending
             sorted.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
 
             StringBuilder sb = new StringBuilder();
