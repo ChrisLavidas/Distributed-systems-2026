@@ -1,37 +1,74 @@
 # Fun Games — Android Application (Παραδοτέο Β)
 
-Κατανεμημένα Συστήματα, Εαρινό 2025–2026
+Κατανεμημένα Συστήματα, Εαρινό 2025–2026  
 Ομάδα 3230096 / 3230188 / 3230064
 
-Android frontend για το σύστημα online παιχνιδιών του Α' μέρους. Συνδέεται
-στον **Master** μέσω **TCP Sockets** (αποκλειστικά), στέλνει φίλτρα, κάνει
-ποντάρισμα, προσθέτει balance και βαθμολογεί παιχνίδια.
+Android frontend για το σύστημα online παιχνιδιών. Συνδέεται στον **Master**
+μέσω **TCP Sockets** αποκλειστικά, στέλνει φίλτρα, κάνει ποντάρισμα,
+προσθέτει balance, βαθμολογεί παιχνίδια και λαμβάνει live jackpot
+notifications μέσω broadcast channel.
 
 ---
 
 ## Δομή του project
 
 ```
-FunGamesApp/
+android/
 ├── app/
 │   ├── build.gradle
 │   └── src/main/
 │       ├── AndroidManifest.xml
+│       ├── assets/games/                          # JSON αρχεία παιχνιδιών (για manager)
+│       │   ├── lucky_slots.json
+│       │   ├── lucky_wheel.json
+│       │   ├── mega_poker.json
+│       │   └── roulette_x.json
 │       ├── java/com/funGames/app/
 │       │   ├── net/
-│       │   │   ├── Protocol.java          # Ακριβές αντίγραφο του shared.Protocol
-│       │   │   └── MasterClient.java      # Ασύγχρονος TCP client (Threads + Handler)
+│       │   │   ├── Protocol.java                  # Ακριβές αντίγραφο shared.Protocol
+│       │   │   └── MasterClient.java              # Ασύγχρονος TCP client (Thread + Handler)
 │       │   ├── model/
-│       │   │   └── Game.java              # Ίδιο transport format με το backend
+│       │   │   └── Game.java                      # Transport format ίδιο με backend
 │       │   ├── util/
-│       │   │   ├── Session.java           # In-memory session (singleton)
-│       │   │   └── Validators.java
+│       │   │   ├── Session.java                   # In-memory session singleton
+│       │   │   ├── SessionPrefs.java              # SharedPreferences (host, port, role)
+│       │   │   ├── PlayerProfile.java             # Stats τοπικά (XP, wins, bets)
+│       │   │   ├── BetHistory.java                # Ιστορικό στοιχημάτων session
+│       │   │   ├── DailyBonus.java                # Daily bonus (+100 FUN/ημέρα)
+│       │   │   ├── SoundManager.java              # Ήχοι UI
+│       │   │   ├── ThemeManager.java              # Theme switching
+│       │   │   ├── SearchResults.java             # Αποτέλεσμα search (wrapper)
+│       │   │   └── Validators.java                # Regex ID validation
 │       │   └── ui/
-│       │       ├── LoginActivity.java     # Player ID + balance + Master host/port
-│       │       ├── MainActivity.java      # Φίλτρα + αποτελέσματα + play/rate/addBalance
-│       │       └── GamesAdapter.java      # RecyclerView adapter
-│       └── res/                            # Layouts, drawables, values
-├── build.gradle                            # Top-level
+│       │       ├── LoginActivity.java             # Player / Manager login
+│       │       ├── MainActivity.java              # Lobby: φίλτρα + αποτελέσματα + live ticker
+│       │       ├── GamePlayActivity.java          # Οθόνη παιχνιδιού
+│       │       ├── ResultsActivity.java           # Αποτέλεσμα στοιχήματος
+│       │       ├── StatsActivity.java             # Στατιστικά παίκτη
+│       │       ├── ManagerActivity.java           # Manager dashboard (Android UI)
+│       │       ├── GamesAdapter.java              # RecyclerView adapter για λίστα παιχνιδιών
+│       │       ├── games/
+│       │       │   ├── SlotMachineView.java       # Custom view — 3-reel slots
+│       │       │   ├── RouletteView.java          # Custom view — European roulette
+│       │       │   ├── PokerView.java             # Custom view — video poker
+│       │       │   └── LuckyWheelView.java        # Custom view — spinning wheel
+│       │       ├── AchievementToastView.java      # Toast επίτευξης
+│       │       ├── AnimatedBalanceTextView.java   # Animated balance counter
+│       │       ├── AnimatedStarRatingView.java    # Animated star rating
+│       │       ├── BetHistoryView.java            # Mini chart ιστορικού
+│       │       ├── CasinoBackgroundView.java      # Animated background
+│       │       ├── TealCasinoBackgroundView.java  # Εναλλακτικό background
+│       │       ├── ConnectionStatusView.java      # Indicator σύνδεσης
+│       │       ├── LiveTickerView.java            # Scrolling live bets bar
+│       │       ├── NaturalLanguageSearchView.java # AI-powered search bar
+│       │       ├── ParticleSystem.java            # Particle effects (jackpot)
+│       │       ├── ShakeErrorView.java            # Shake animation για errors
+│       │       ├── SkeletonLoadingView.java       # Skeleton loading state
+│       │       ├── StatsChartView.java            # Bar chart για manager stats
+│       │       ├── SwipeActionCallback.java       # Swipe-to-action σε κάρτες
+│       │       └── WinStreakBannerView.java        # Win streak banner
+│       └── res/                                   # Layouts, drawables, anim, values
+├── build.gradle
 ├── settings.gradle
 ├── gradle.properties
 └── README.md
@@ -39,73 +76,80 @@ FunGamesApp/
 
 ---
 
-## Απαιτήσεις που καλύπτονται
+## Ports
 
-- **TCP Sockets only** — καμία HTTP/REST επικοινωνία. Χρήση
-  `ObjectOutputStream.writeUTF` / `ObjectInputStream.readUTF` όπως στο
-  backend `DummyPlayer`.
-- **Ασύγχρονη επικοινωνία** — κάθε network call στον `MasterClient`
-  τρέχει σε δικό του `Thread`, τα results ποστάρονται πίσω στο
-  main (UI) thread μέσω `Handler(Looper.getMainLooper())`. Το UI
-  παραμένει διαδραστικό σε όλη τη διάρκεια των requests.
-- **search() / play() / addBalance() / rateGame()** — όπως ζητάει η
-  εκφώνηση, με τα ίδια payload formats που χρησιμοποιεί και ο DummyPlayer.
-- **Ίδιο wire protocol με το backend** — μέσω των αντιγραμμένων
-  `Protocol.java` και `Game.java` (σταθερές `SEP`, `SEARCH`, `PLAY`,
-  κτλ. και `fromTransportString()` / 10 πεδία `~~` διαχωρισμένα).
-- **In-memory only** — καμία βάση, κανένα shared prefs, κανένα SQLite.
-  Ο `Session` singleton ζει για το lifetime του Android process.
+| | Port |
+|--|------|
+| Master (κύριο) | 5000 |
+| Master broadcast (live ticker / jackpot) | **masterPort + 10** = 5010 |
+
+Το broadcast port **δεν εισάγεται από τον χρήστη** — υπολογίζεται αυτόματα
+ως `masterPort + 10` μέσα στο `LoginActivity`.
+
+---
+
+## Απαιτήσεις εκφώνησης που καλύπτονται
+
+| Απαίτηση | Υλοποίηση |
+|----------|-----------|
+| TCP Sockets αποκλειστικά | `MasterClient` χρησιμοποιεί `ObjectOutputStream.writeUTF` / `ObjectInputStream.readUTF` |
+| Ασύγχρονη επικοινωνία | Κάθε network call τρέχει σε background `Thread`, αποτελέσματα ποστάρονται στο UI thread μέσω `Handler(Looper.getMainLooper())` |
+| `search()` | Στέλνει φίλτρα, λαμβάνει stream από `MAP_RESULT` rows + `END` |
+| `play()` | Στέλνει `PLAY~~playerId~~gameName~~bet`, λαμβάνει `OK~~result` |
+| `addBalance()` | Στέλνει `ADD_BALANCE~~playerId~~amount` |
+| Rating (1–5 αστέρια) | Στέλνει `RATE_GAME~~playerId~~gameName~~stars` |
+| Live jackpot notifications | Persistent broadcast socket (port 5010), background thread, `SUBSCRIBE~~playerId` |
 
 ---
 
 ## Πώς να το τρέξετε
 
-### 1. Άνοιγμα στο Android Studio
+### 1. Εκκίνηση backend
 
-1. Άνοιγμα → Open an Existing Project → επιλογή του φακέλου `FunGamesApp/`
-2. Περιμένετε να κάνει Gradle sync (κατεβάζει τα dependencies)
-3. Build → Make Project
-
-### 2. Εκκίνηση του backend (Α' μέρος)
-
-Από τον φάκελο του Α' παραδοτέου, ξεκινήστε τα components με τη σειρά:
+Από τον root φάκελο του project:
 
 ```bash
-# 1. Secure Random Generator
+# Compile
+find src -name "*.java" > sources.txt && javac -d bin @sources.txt
+
+# 1. SRG
 java -cp bin srg.SecureRandomGenerator 6000
 
 # 2. Reducer
 java -cp bin reducer.Reducer 7000
 
-# 3. Workers (ένας ή περισσότεροι)
+# 3. Workers
 java -cp bin worker.WorkerNode 0 5001 localhost 6000 localhost 7000
 java -cp bin worker.WorkerNode 1 5002 localhost 6000 localhost 7000
 
-# 4. Master
-java -cp bin master.Master 5000 localhost 7000 localhost:5001 localhost:5002
+# 4. Master  (broadcast = 5010 = masterPort + 10)
+java -cp bin master.Master 5000 5010 localhost 7000 localhost:5001 localhost:5002
 
-# 5. Manager — προσθέστε μερικά παιχνίδια πριν τεστάρετε το app
-java -cp bin manager.ManagerApp localhost 5000
+# 5. Manager — προσθέστε παιχνίδια πριν τεστάρετε
+java -cp bin manager.ManagerApp localhost 5000 AK1234
 ```
 
-### 3. Εκκίνηση του Android app
+**Windows:** `start_all.bat` ανοίγει κάθε component σε δικό του terminal.
 
-Τρέξτε σε **Android Emulator** ή σε πραγματική συσκευή.
+### 2. Άνοιγμα στο Android Studio
 
-Στην οθόνη login:
+1. File → Open → επιλογή του φακέλου `android/`
+2. Αναμονή Gradle sync
+3. Build → Make Project
+4. Run σε emulator ή πραγματική συσκευή
 
-| Πεδίο            | Τιμή (παράδειγμα)            |
-| ---------------- | ---------------------------- |
-| Player ID        | `AN1234` (2 κεφαλαία + 4 ψηφία) |
-| Starting balance | `100`                        |
-| Master host      | `10.0.2.2` (emulator → host) ή IP του μηχανήματος |
-| Master port      | `5000`                       |
+### 3. Login
 
-**Σημαντικό για τον emulator:** το `10.0.2.2` είναι το alias του Android
-emulator για `localhost` του host machine σας. Αν τρέχετε σε πραγματική
-συσκευή, βρείτε την IP του PC στο LAN (π.χ. `192.168.1.X`) και
-χρησιμοποιήστε αυτή — και βεβαιωθείτε ότι το firewall επιτρέπει συνδέσεις
-στο port 5000.
+| Πεδίο | Player | Manager |
+|-------|--------|---------|
+| ID | 2 κεφαλαία + 4 ψηφία (π.χ. `AN1234`) | 2 κεφαλαία + 4 ψηφία (π.χ. `AK1234`) |
+| Balance | Αρχικό ποσό FUN | — |
+| Master host | `10.0.2.2` (emulator) ή LAN IP συσκευής | ίδιο |
+| Master port | `5000` | `5000` |
+
+> **Emulator:** το `10.0.2.2` είναι το alias για το `localhost` του host
+> machine. Σε πραγματική συσκευή χρησιμοποιήστε την LAN IP του PC
+> (π.χ. `192.168.1.X`) και βεβαιωθείτε ότι το firewall επιτρέπει port 5000 και 5010.
 
 ---
 
@@ -113,82 +157,70 @@ emulator για `localhost` του host machine σας. Αν τρέχετε σε
 
 ### Search
 
-1. Επιλέξτε ελάχιστα αστέρια (0–5, άδειο = 0)
-2. Επιλέξτε bet category chip (ANY / $ / $$ / $$$)
-3. Επιλέξτε risk chip (ANY / LOW / MED / HIGH)
-4. Πατήστε **Search**
-5. Τα αποτελέσματα εμφανίζονται σαν κάρτες με game info, risk pill,
-   jackpot multiplier και bet range.
+1. Επιλέξτε **Min Stars** (ALL / 1★ – 5★)
+2. Επιλέξτε **Bet Category** (ANY / $ / $$ / $$$)
+3. Επιλέξτε **Risk Level** (ANY / LOW / MED / HIGH)
+4. Πατήστε **SEARCH GAMES** — τα αποτελέσματα έρχονται ασύγχρονα
 
 ### Play
 
-1. Στην κάρτα ενός παιχνιδιού πατήστε **PLAY**
-2. Εμφανίζεται dialog με τα όρια πονταρίσματος και το τρέχον balance
-3. Εισάγετε ποσό και πατήστε **Place bet**
-4. Το αποτέλεσμα (win / partial / loss / jackpot) εμφανίζεται σε popup
-5. Το balance ενημερώνεται αυτόματα στο top bar
+1. Πατήστε **PLAY** σε μια κάρτα παιχνιδιού
+2. Επιλέξτε ποσό στοιχήματος (εντός MinBet – MaxBet)
+3. Το αποτέλεσμα (WIN / PARTIAL / LOSS / JACKPOT) εμφανίζεται στην οθόνη
+4. Το balance ενημερώνεται αυτόματα
 
 ### Rate
 
-1. Πατήστε **Rate** σε μια κάρτα παιχνιδιού
-2. Πατήστε τα αστέρια (1–5)
-3. Submit → η βαθμολογία αποστέλλεται στον Master
+Πατήστε **RATE** σε μια κάρτα → επιλέξτε 1–5 αστέρια → η βαθμολογία αποστέλλεται στον Master.
 
 ### Add Balance
 
-1. Πατήστε **+ FUN** στο top bar
-2. Εισάγετε ποσό → Add
-3. Το balance ενημερώνεται και ο Master ειδοποιείται
+Πατήστε **+ ADD** στο wallet pod → εισάγετε ποσό → το Master ενημερώνεται.
+
+### Manager Dashboard (Android)
+
+Αν συνδεθείτε ως Manager ανοίγει το `ManagerActivity` με 4 tabs:
+
+| Tab | Λειτουργία |
+|-----|-----------|
+| GAMES | Add / Remove / Change Risk |
+| BY PROVIDER | MapReduce stats ανά provider + bar chart |
+| BY PLAYER | MapReduce stats ανά παίκτη + leaderboard |
+| SYSTEM | Worker health check + Stress test |
 
 ---
 
-## Πρωτόκολλο επικοινωνίας (για reference)
+## Πρωτόκολλο επικοινωνίας
 
-Όλα τα μηνύματα πάνε με `writeUTF` / `readUTF` πάνω από
-`Object[Input|Output]Stream`. Τα πεδία χωρίζονται με `~~`.
+Όλα τα μηνύματα με `writeUTF` / `readUTF` πάνω από `ObjectOutputStream` /
+`ObjectInputStream`. Πεδία χωρίζονται με `~~`.
 
-| Ενέργεια    | Request                             | Response                                   |
-| ----------- | ----------------------------------- | ------------------------------------------ |
-| SEARCH      | `SEARCH~~minStars~~betCat~~risk`    | Stream από `MAP_RESULT~~<10 πεδία game>` και `END` |
-| PLAY        | `PLAY~~playerId~~gameName~~bet`     | `OK~~<playerResult>` ή `ERROR~~<msg>`     |
-| ADD_BALANCE | `ADD_BALANCE~~playerId~~amount`     | `OK~~Balance updated`                      |
-| RATE_GAME   | `RATE_GAME~~playerId~~gameName~~stars` | `OK~~Rating updated` ή `ERROR~~<msg>`  |
-
-Αν το αλλάξετε στο backend, πρέπει να ενημερώσετε και το
-`net/Protocol.java` + `model/Game.java` στο app.
+| Ενέργεια | Request | Response |
+|----------|---------|----------|
+| SEARCH | `SEARCH~~minStars~~betCat~~risk` | Stream: `MAP_RESULT~~<game>` … `END` |
+| PLAY | `PLAY~~playerId~~gameName~~bet` | `OK~~<result>` ή `ERROR~~<msg>` |
+| ADD_BALANCE | `ADD_BALANCE~~playerId~~amount` | `OK~~…` |
+| RATE_GAME | `RATE_GAME~~playerId~~gameName~~stars` | `OK~~…` ή `ERROR~~<msg>` |
+| GET_BALANCE | `GET_BALANCE~~playerId` | `OK~~<balance>` |
+| SUBSCRIBE | `SUBSCRIBE~~playerId` (broadcast port) | persistent — push notifications |
 
 ---
 
 ## Troubleshooting
 
-**"Network error: failed to connect"**
-Ο Master δεν τρέχει, ή λάθος host/port, ή το firewall μπλοκάρει. Σε
-emulator χρησιμοποιήστε `10.0.2.2` ΟΧΙ `localhost` / `127.0.0.1`.
+**"Network error: failed to connect"**  
+Ο Master δεν τρέχει, ή λάθος host/port. Σε emulator χρησιμοποιήστε
+`10.0.2.2` — ΟΧΙ `localhost` / `127.0.0.1`.
 
-**"Bet must be between X and Y"**
-Το ποντάρισμά σας είναι εκτός του range που δηλώνει το παιχνίδι.
+**Δεν εμφανίζονται παιχνίδια**  
+Ο Manager πρέπει να έχει προσθέσει τουλάχιστον ένα παιχνίδι. Δοκιμάστε
+τα JSONs στο `sample_data/` του backend ή τα assets στο `android/app/src/main/assets/games/`.
 
-**Player ID δεν γίνεται δεκτό**
-Πρέπει να είναι ακριβώς 2 κεφαλαία γράμματα ακολουθούμενα από 4 ψηφία
-(π.χ. `AN1234`, `XY9999`). Ο DummyPlayer του Α' μέρους έχει το ίδιο regex.
+**"Bet must be between X and Y"**  
+Το ποσό στοιχήματος είναι εκτός ορίων MinBet–MaxBet του παιχνιδιού.
 
-**Η εφαρμογή δεν βλέπει κανένα παιχνίδι**
-Πρώτα πρέπει ο Manager να έχει προσθέσει τουλάχιστον ένα παιχνίδι μέσω
-του console app του Α' μέρους. Δοκιμάστε με τα sample JSONs στο
-`sample_data/` του backend.
+**Player/Manager ID δεν γίνεται δεκτό**  
+Πρέπει να είναι ακριβώς 2 κεφαλαία γράμματα + 4 ψηφία (π.χ. `AN1234`).
 
----
-
-## Σχεδιαστικές αποφάσεις
-
-- **Dark neon-casino palette**: navy + gold για τα CTAs + pink/mint
-  accents για win/loss. Επιλογή συνεπής με το casino theme.
-- **Chip-based filters** αντί για dropdowns: γρηγορότερα στο κινητό,
-  λιγότερα taps.
-- **In-memory balance, subtract-before-return**: όπως και ο DummyPlayer
-  του Α' μέρους, κρατάμε balance τοπικά και το ενημερώνουμε όταν
-  έρχεται το playerResult από τον Master.
-- **Callbacks, όχι LiveData / Coroutines**: ο κώδικας μένει απλός Java
-  και αξιοποιεί μόνο core Android (Handler + Thread), όπως απαιτεί το
-  πνεύμα της εργασίας που απαγορεύει ready-made concurrency utilities
-  στο backend.
+**Δεν λαμβάνονται jackpot notifications**  
+Βεβαιωθείτε ότι το firewall επιτρέπει και το **broadcast port** (masterPort + 10 = 5010).
