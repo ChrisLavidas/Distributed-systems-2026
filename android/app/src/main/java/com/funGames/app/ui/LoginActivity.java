@@ -120,10 +120,13 @@ public class LoginActivity extends AppCompatActivity {
             com.funGames.app.util.PlayerProfile.get(this).reset(this, userId);
             MasterClient tempClient = new MasterClient(host, port, port + 10);
             tempClient.getBalanceAsync(userId, (ok, payload) -> {
-                double balance = 0.0;
-                if (ok) {
-                    try { balance = Double.parseDouble(payload); } catch (NumberFormatException ignored) {}
+                if (!ok) {
+                    btnLogin.setEnabled(true);
+                    toast("Cannot connect to server: " + payload);
+                    return;
                 }
+                double balance = 0.0;
+                try { balance = Double.parseDouble(payload); } catch (NumberFormatException ignored) {}
                 Session.get().initPlayer(userId, balance, host, port, port + 10);
                 SessionPrefs.save(this, userId, "PLAYER", host, port);
                 startActivity(new Intent(this, MainActivity.class));
