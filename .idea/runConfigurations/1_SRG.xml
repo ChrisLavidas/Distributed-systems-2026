@@ -1,9 +1,8 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="1. SRG" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="srg.SecureRandomGenerator" />
-    <option name="PROGRAM_PARAMETERS" value="6000" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <module name="3230096_3230188_3230064" />
+    <option name="PROGRAM_PARAMETERS" value="6000" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

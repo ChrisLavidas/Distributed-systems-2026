@@ -39,7 +39,7 @@ public class SecureRandomGenerator {
     // buffer per game
     static class GameBuffer {
         private final Queue<Integer> queue   = new LinkedList<>();
-        private final String         secret;
+        private final String  secret; //secret = hashkey included in each game's json file (different haskey for each of the games)
 
         GameBuffer(String gameId, String secret) {
             this.secret = secret;
@@ -100,7 +100,7 @@ public class SecureRandomGenerator {
 
                 // Create buffer for this game if first time seen
                 GameBuffer buf;
-                synchronized (buffersLock) { // ftiaxnoyme ta locks οπως του srg με διαφορετικα ονόματα
+                synchronized (buffersLock) {
                     buf = buffers.get(gameId);
                     if (buf == null) {
                         buf = new GameBuffer(gameId, secret);
@@ -108,7 +108,7 @@ public class SecureRandomGenerator {
                     }
                 }
 
-                int    number = buf.consume();
+                int number = buf.consume();
                 String hash   = sha256(number + buf.getSecret());
 
                 out.writeUTF(Protocol.build(Protocol.SRG_RESPONSE,
@@ -127,10 +127,10 @@ public class SecureRandomGenerator {
 
     public static String sha256(String input) {
         try {
-            MessageDigest md    = MessageDigest.getInstance("SHA-256");
-            byte[]        bytes = md.digest(input.getBytes("UTF-8"));
+            MessageDigest md = MessageDigest.getInstance("SHA-256"); // SHA-256 message digest algorithm
+            byte[] bytes = md.digest(input.getBytes("UTF-8")); //generate hash in byte form
             StringBuilder sb    = new StringBuilder();
-            for (byte b : bytes) sb.append(String.format("%02x", b));
+            for (byte b : bytes) sb.append(String.format("%02x", b)); // turn the byte form hash into string
             return sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("SHA-256 failed", e);

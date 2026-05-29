@@ -165,7 +165,7 @@ public class Master {
     }
 
     private String sendToWorker(String host, int port, String message) throws IOException {
-        Socket             worker = new Socket(host, port);
+        Socket worker = new Socket(host, port); //master sends new connection to worker
         ObjectOutputStream out    = new ObjectOutputStream(worker.getOutputStream());
         out.flush();
         ObjectInputStream  in     = new ObjectInputStream(worker.getInputStream());
@@ -176,6 +176,7 @@ public class Master {
         return result;
     }
 
+    //sendToWorkerSafe: if the primary worker of a game is down, instead of crashing, a null value is returned and we then search if any replica workers exist
     private String sendToWorkerSafe(String host, int port, String message) {
         try {
             return sendToWorker(host, port, message);
@@ -185,6 +186,7 @@ public class Master {
         }
     }
 
+    //primary worker up but has no data- retrieve data from replicas
     private void tryRevivePrimaryFromReplica(String gameName) {
         if (!hasReplica()) return; // No replica available
         int primaryIdx = getWorkerIndex(gameName); //get the index of the primary worker
@@ -262,7 +264,7 @@ public class Master {
         int n = workerHosts.size();
         final boolean[] failed = new boolean[n];
 
-        List<Thread> threads = new ArrayList<>();
+        List<Thread> threads = new ArrayList<>(); //collect data from each worker (mapping phase)
         for (int i = 0; i < n; i++) {
             final int idx = i;
             Thread t = new Thread(() -> {
@@ -422,7 +424,7 @@ public class Master {
                     Protocol.build(Protocol.WORKER_ADD, game.toTransportString()));
 
             if (hasReplica()) {
-                for (int repIdx : replicaIndices(game.getGameName())) {
+                for (int repIdx : replicaIndices(game.getGameName())) { //sends game's data to all other workers, all other workers are considered "replicas" except from the primary worker
                     String repResult = sendToWorkerSafe(
                             workerHosts.get(repIdx), workerPorts.get(repIdx),
                             Protocol.build(Protocol.WORKER_ADD_REPLICA,
@@ -564,7 +566,7 @@ public class Master {
 
             try {
                 result = sendToWorker(workerHost(gameName), workerPort(gameName), playCmd);
-                if (!Protocol.parse(result)[0].equals(Protocol.OK) && hasReplica()) {
+                if (!Protocol.parse(result)[0].equals(Protocol.OK) && hasReplica()) { //try to revive primary worker
                     tryRevivePrimaryFromReplica(gameName);
                     String retried = sendToWorkerSafe(workerHost(gameName), workerPort(gameName), playCmd);
                     if (retried != null) result = retried;

@@ -250,7 +250,7 @@ public class MasterClient {
             @Override public void run() {
                 Socket s = null;
                 try {
-                    s = openSocket();
+                    s = openSocket(); // call method for connection with backend master
                     ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
                     out.flush();
                     ObjectInputStream  in  = new ObjectInputStream(s.getInputStream());
@@ -280,7 +280,7 @@ public class MasterClient {
 
     private Socket openSocket() throws IOException {
         Socket s = new Socket();
-        s.connect(new InetSocketAddress(masterHost, masterPort), CONNECT_TIMEOUT_MS);
+        s.connect(new InetSocketAddress(masterHost, masterPort), CONNECT_TIMEOUT_MS); //connect with master's socket in the backend
         s.setSoTimeout(READ_TIMEOUT_MS);
         return s;
     }

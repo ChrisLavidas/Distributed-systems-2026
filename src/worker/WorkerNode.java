@@ -24,21 +24,21 @@ public class WorkerNode {
 
     // In-memory storage
     // gamesLock: protects games, primaryGameNames, replicaOwnerMap
-    private final Object                  gamesLock    = new Object();
+    private final Object gamesLock    = new Object();
     // betsLock: protects allBets and houseBalance
-    private final Object                  betsLock     = new Object();
+    private final Object betsLock     = new Object(); //different locks for games,bets to not lock both of them in methods where only one is needed
 
-    private final Map<String, Game>       games        = new HashMap<>();
+    private final Map<String, Game> games = new HashMap<>();
     // gameName -> net result from house perspective (positive = house earned)
-    private final Map<String, Double>     houseBalance = new HashMap<>();
+    private final Map<String, Double>  houseBalance = new HashMap<>();
     // all bets ever placed (for MapReduce queries)
-    private final List<BetRecord>         allBets      = new ArrayList<>();
+    private final List<BetRecord>  allBets      = new ArrayList<>();
 
     // Active Replication (Bonus)
-    // games for which THIS worker is the primary (determined by H(name) % N)
-    private final Set<String>            primaryGameNames = new HashSet<>();
+    // games for which this worker is the primary (determined by H(name) % N)
+    private final Set<String> primaryGameNames = new HashSet<>();
     // gameName -> primary worker index (for replica games only)
-    private final Map<String, Integer>   replicaOwnerMap  = new HashMap<>();
+    private final Map<String, Integer>  replicaOwnerMap  = new HashMap<>();
 
     public WorkerNode(int workerId, int port,
                       String srgHost, int srgPort,
@@ -66,10 +66,10 @@ public class WorkerNode {
     public void start() {
         System.out.println("[Worker-" + workerId + "] Starting on port " + port);
         try {
-            ServerSocket serverSocket = new ServerSocket(port);
-            while (true) {
-                Socket masterSocket = serverSocket.accept();
-                new HandleMaster(masterSocket).start();
+            ServerSocket serverSocket = new ServerSocket(port); //worker opens a port where he "listens" connections
+            while (true) { //handle multiple connections from master
+                Socket masterSocket = serverSocket.accept(); //wait till master tries to connect, accept connection
+                new HandleMaster(masterSocket).start(); //start connection with master
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,7 +132,7 @@ public class WorkerNode {
     // WORKER_PING - returns worker stats: activeGames, totalBets
     private void handlePing(ObjectOutputStream out) throws IOException {
         int activeGames = 0;
-        synchronized (gamesLock) {
+        synchronized (gamesLock) { // only one thread has access to "games" at this time, in order to prevent another thread change "games' " form and a possible crash
             for (Game g : games.values())
                 if (g.isActive() && primaryGameNames.contains(g.getGameName())) activeGames++;
         }
@@ -350,7 +350,7 @@ public class WorkerNode {
             game = g; // snapshot reference — lock released after this block
         }
 
-        // SRG call happens OUTSIDE any lock — other requests can proceed in parallel
+        // SRG call happens outside any lock — other requests can proceed in parallel
         int randomNumber;
         try {
             randomNumber = getRandomFromSRG(gameName, game.getHashKey());
@@ -381,7 +381,7 @@ public class WorkerNode {
     private static final int SRG_TIMEOUT_MS = 5000; // 5 seconds max wait for SRG
 
     private int getRandomFromSRG(String gameId, String secret) throws IOException {
-        Socket srgSocket = new Socket();
+        Socket srgSocket = new Socket(); //set connection with srg
         try {
             // Connect with timeout — prevents hanging if SRG is unreachable
             srgSocket.connect(new InetSocketAddress(srgHost, srgPort), SRG_TIMEOUT_MS);
@@ -394,12 +394,12 @@ public class WorkerNode {
             srgOut.writeUTF(Protocol.build(Protocol.SRG_REQUEST, gameId, secret));
             srgOut.flush();
 
-            String   response     = srgIn.readUTF();
-            String[] p            = Protocol.parse(response);
-            int      number       = Integer.parseInt(p[1]);
+            String   response = srgIn.readUTF();
+            String[] p = Protocol.parse(response);
+            int number = Integer.parseInt(p[1]); //random number from srg response
             String   receivedHash = p[2];
 
-            String expectedHash = SecureRandomGenerator.sha256(number + secret);
+            String expectedHash = SecureRandomGenerator.sha256(number + secret); // compute hash number to see if it's the same srg sent
             if (!expectedHash.equals(receivedHash)) {
                 throw new IOException("SRG hash verification FAILED for game " + gameId);
             }
@@ -412,9 +412,9 @@ public class WorkerNode {
     private double computeResult(int randomNumber, double betAmount, Game game) {
         int mod100 = randomNumber % 100;
         if (mod100 == 0) {
-            return betAmount * game.getJackpot();
+            return betAmount * game.getJackpot(); //jackpot
         }
-        int    idx        = randomNumber % 10;
+        int    idx = randomNumber % 10; //no jackpot, return %10 result
         double multiplier = game.getMultiplierTable()[idx];
         return betAmount * multiplier;
     }
@@ -478,7 +478,7 @@ public class WorkerNode {
         }
 
         // Connect to Reducer OUTSIDE any lock — stats are already snapshotted above
-        Socket             reducerSocket = new Socket();
+        Socket reducerSocket = new Socket();
         reducerSocket.connect(new InetSocketAddress(reducerHost, reducerPort), 5000);
         reducerSocket.setSoTimeout(5000);
         ObjectOutputStream rOut = new ObjectOutputStream(reducerSocket.getOutputStream());

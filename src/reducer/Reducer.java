@@ -27,7 +27,7 @@ public class Reducer {
 
     public static void main(String[] args) {
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : DEFAULT_PORT;
-        new Reducer().start(port);
+        new Reducer().start(port); //reducer starts working
     }
 
     public void start(int port) {
@@ -71,7 +71,7 @@ public class Reducer {
             }
         }
 
-        //Processes incoming map results from a Worker.
+        //Processes incoming map results from a Worker - for player/provider results
         //The loop continues until an END signal for the specific mapId is received
         private void handleMapInput(String firstLine, ObjectInputStream in) throws IOException {
             String currentLine = firstLine;
@@ -79,12 +79,12 @@ public class Reducer {
             while (true) {
                 String[] p = Protocol.parse(currentLine);
 
-                if (p[0].equals(Protocol.END) && p.length > 1) {
+                if (p[0].equals(Protocol.END) && p.length > 1) { //worker finished his job
                     // END~~mapId
                     String mapId = p[1];
                     synchronized (lock) {
                         completedWorkers.merge(mapId, 1, Integer::sum);
-                        lock.notifyAll();
+                        lock.notifyAll(); //wake up master to check if all workers have finished their jobs to then produce the player/provider statistics/results
                     }
                     System.out.println("[Reducer] Worker finished mapId=" + mapId
                             + " total=" + completedWorkers.get(mapId));
@@ -136,7 +136,7 @@ public class Reducer {
                     + " | waiting for " + expectedWorkers + " worker(s)...");
 
             synchronized (lock) {
-                while (completedWorkers.getOrDefault(mapId, 0) < expectedWorkers) {
+                while (completedWorkers.getOrDefault(mapId, 0) < expectedWorkers) { //check if there is any worker who hasn't finished its task before trying to print the by player/by provider results (would maybe have wrong data if the results were printed while at least one worker was editing them)
                     try { lock.wait(5000); } catch (InterruptedException ignored) {}
                 }
             }
