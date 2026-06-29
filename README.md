@@ -24,7 +24,7 @@ There is no database. No external frameworks. No third-party libraries. Everythi
 Android App / DummyPlayer
         │  TCP :5000
         ▼
-     MASTER  ──── Broadcast Server :5003 ──► all connected players (jackpot / live ticker)
+     MASTER  ──── Broadcast Server :5010 ──► all connected players (jackpot / live ticker)
     /   |   \
    /    |    \         TCP
 Worker0 Worker1 ... WorkerN
@@ -284,7 +284,7 @@ java -cp bin player.DummyPlayer 192.168.1.11 5000 5010 AB1234 500.0
 ### Android app
 
 Open the `android/` folder in Android Studio, sync Gradle, and run on an emulator or device.
-- **Emulator:** connect to `10.0.2.2:5000` (broadcast `10.0.2.2:5003`)
+- **Emulator:** connect to `10.0.2.2:5000` (broadcast `10.0.2.2:5010`)
 - **Real device (same LAN):** use the machine's LAN IP
 
 ---
@@ -385,7 +385,7 @@ Place the JSON file in `sample_data/` (or anywhere accessible). Pass the path to
 
 Every connection is a raw TCP socket. The Master listens on port 5000 for players and managers, Workers on their own ports, SRG on 6000, Reducer on 7000. There is no HTTP, no REST, no message queue. Each request opens a connection, sends a command in our custom `~~`-delimited protocol, reads the response, and closes.
 
-The broadcast channel on port 5003 stays **permanently open** so the Master can push jackpot and bet notifications to connected players without polling.
+The broadcast channel on port 5010 stays **permanently open** so the Master can push jackpot and bet notifications to connected players without polling.
 
 ### Multithreading with `synchronized` and `wait/notify`
 
